@@ -257,6 +257,10 @@ public func stringForMessageTimestampStatus(
             dateText = "\(authorTitle), \(dateText)"
         }
     }
+    // AlfaGram: a message its sender deleted, kept here.
+    if message.attributes.contains(where: { $0 is AlfaDeletedMessageAttribute }) {
+        dateText = "🗑 \(dateText)"
+    }
     
     return dateText
 }

@@ -274,6 +274,19 @@ extension ReplayContext {
     }
     
     func applyDeleteMessagesWithGlobalIds(_ ids: [Int32]) {
+        var ids = ids
+        if AlfaSettings.saveDeletedMessages {
+            // AlfaGram: the stored ones stay, marked deleted; only the rest is deleted.
+            let storedIds = transaction.messageIdsForGlobalIds(ids)
+            let remainingIds = Set(alfaKeepDeletedMessages(transaction: transaction, ids: storedIds))
+            let keptGlobalIds = Set(storedIds.filter({ !remainingIds.contains($0) }).map({ $0.id }))
+            if !keptGlobalIds.isEmpty {
+                ids = ids.filter({ !keptGlobalIds.contains($0) })
+                if ids.isEmpty {
+                    return
+                }
+            }
+        }
         var resourceIds: [MediaResourceId] = []
         transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
             addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
@@ -285,6 +298,11 @@ extension ReplayContext {
     }
     
     func applyDeleteMessages(_ ids: [MessageId]) {
+        // AlfaGram: stored Cloud messages stay, marked deleted (scheduled and quick-reply ones are deleted as before).
+        let ids = alfaKeepDeletedMessages(transaction: transaction, ids: ids)
+        if ids.isEmpty {
+            return
+        }
         _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, manualAddMessageThreadStatsDifference: { id, add, remove in
             self.addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)
         })
@@ -317,7 +335,7 @@ extension ReplayContext {
                 generatedEvent = reactionGeneratedEvent(previousMessage.reactionsAttribute, message.reactionsAttribute, message: message, transaction: transaction)
             }
 
-            return .update(mergedServerMessageUpdate(previous: previousMessage, updated: message))
+            return .update(alfaMessageWithEditHistory(previous: previousMessage, updated: mergedServerMessageUpdate(previous: previousMessage, updated: message)))
         })
         // A fetch in flight may be bringing the message with its old content, over the edited one or, with none stored
         // here, instead of it; it stores this edit in its place (Postbox's record of recent edits,

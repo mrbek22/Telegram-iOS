@@ -258,6 +258,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     } else {
         notificationsWarning = false
     }
+    // AlfaGram: its own settings, first in this section.
+    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 7, text: "AlfaGram", icon: PresentationResourcesSettings.aiTools, action: {
+        interaction.openSettings(.alfaGram)
+    }))
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 0, label: notificationsWarning ? .badge("!", presentationData.theme.list.itemDestructiveColor) : .none, text: presentationData.strings.Settings_NotificationsAndSounds, icon: PresentationResourcesSettings.notifications, labelAccessibilityText: notificationsWarning ? presentationData.strings.VoiceOver_TabBar_AttentionRequired : nil, action: {
         interaction.openSettings(.notificationsAndSounds)
     }))

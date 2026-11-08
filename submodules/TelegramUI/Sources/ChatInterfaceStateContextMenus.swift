@@ -1251,6 +1251,31 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
         
+        // AlfaGram: the earlier texts of an edited message.
+        let alfaEditHistory = message.alfaEditHistory
+        if !alfaEditHistory.isEmpty {
+            actions.append(.action(ContextMenuActionItem(text: "Tahrir tarixi", icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Edit"), color: theme.actionSheet.primaryTextColor)
+            }, action: { c, _ in
+                c?.dismiss(completion: {
+                    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                    var parts: [String] = ["Hozirgi:\n\(message.text)"]
+                    for entry in alfaEditHistory.reversed() {
+                        let date = stringForMessageTimestamp(timestamp: entry.date, dateTimeFormat: presentationData.dateTimeFormat)
+                        parts.append("\(date) gacha:\n\(entry.text)")
+                    }
+                    controllerInteraction.presentController(textAlertController(
+                        context: context,
+                        title: "Tahrir tarixi",
+                        text: parts.joined(separator: "\n\n"),
+                        actions: [
+                            TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})
+                        ]
+                    ), nil)
+                })
+            })))
+        }
+
         if data.messageActions.options.contains(.sendScheduledNow) {
             actions.append(.action(ContextMenuActionItem(text: chatPresentationInterfaceState.strings.ScheduledMessages_SendNow, icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Resend"), color: theme.actionSheet.primaryTextColor)

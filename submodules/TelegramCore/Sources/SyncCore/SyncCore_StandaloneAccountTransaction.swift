@@ -187,6 +187,7 @@ public let telegramPostboxSeedConfiguration: SeedConfiguration = {
             if let previousEphemeralReplacement, !updated.contains(where: { $0 is EphemeralReplacementMessageAttribute }) {
                 updated.append(previousEphemeralReplacement)
             }
+            alfaMergeMessageAttributes(previous: previous, updated: &updated)
         },
         decodeMessageThreadInfo: { entry in
             guard let data = entry.get(MessageHistoryThreadData.self) else {

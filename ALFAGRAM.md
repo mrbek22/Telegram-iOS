@@ -17,11 +17,11 @@ Ish tarmog'i: `alfagram`.
 
 1. **Brend** ✅ — nom "AlfaGram" (`Telegram/BUILD` CFBundleDisplayName), ikonka `Telegram/Telegram-iOS/Telegram.icon`.
    Qoldi: muqobil ikonkalar (`*.alticon`), ishga tushish ekrani, bundle ID (Apple akkaunti bilan).
-2. **AlfaGram sozlamalari** — `submodules/AlfaGram` moduli: bayroqlar (UserDefaults), Sozlamalarda "AlfaGram" bo'limi.
-3. **O'chirilgan xabarlarni saqlash** — `TelegramCore/Sources/State/Sync/StateReplay.swift`
+2. **AlfaGram sozlamalari** ✅ (`TelegramCore/Sources/AlfaGram/AlfaSettings.swift`, ekran `SettingsUI/Sources/AlfaGram`) — `submodules/AlfaGram` moduli: bayroqlar (UserDefaults), Sozlamalarda "AlfaGram" bo'limi.
+3. **O'chirilgan xabarlarni saqlash** ✅ (`AlfaDeletedMessageAttribute`, `alfaKeepDeletedMessages`; vaqt yonida 🗑) — `TelegramCore/Sources/State/Sync/StateReplay.swift`
    (`.DeleteMessages`, `.DeleteMessagesWithGlobalIds` → `applyDeleteMessagesWithGlobalIds`): o'chirish o'rniga belgi qo'yish.
-4. **Tahrir tarixi** — xabar tahrirlanganda eski matnni lokal saqlash.
-5. **Ghost rejim** — onlayn: `TelegramCore/Sources/State/ManagedAccountPresence.swift`; yozyapman:
+4. **Tahrir tarixi** ✅ (`AlfaEditHistoryMessageAttribute`, kontekst menyu "Tahrir tarixi") — xabar tahrirlanganda eski matnni lokal saqlash.
+5. **Ghost rejim** ✅ (onlayn, yozyapti, o'qildi) — onlayn: `TelegramCore/Sources/State/ManagedAccountPresence.swift`; yozyapman:
    `ManagedLocalInputActivities.swift`; o'qildi belgisi — read state sinxronlash.
 6. **Avto papkalar, arxiv turlari, ikki tomonlama surish, onlayn tarix, APK/havola himoyasi** (iOS'da APK yo'q —
    faqat havola himoyasi).

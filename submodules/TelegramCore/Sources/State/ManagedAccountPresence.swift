@@ -43,6 +43,8 @@ private final class AccountPresenceManagerImpl {
     }
     
     private func updatePresence(_ isOnline: Bool) {
+        // AlfaGram ghost mode: never reported online.
+        let isOnline = isOnline && !AlfaSettings.ghostOnline
         let request: Signal<Api.Bool, MTRpcError>
         if isOnline {
             let timer = SignalKitTimer(timeout: 30.0, repeat: false, completion: { [weak self] in

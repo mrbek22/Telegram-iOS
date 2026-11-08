@@ -335,6 +335,11 @@ private func pushPeerReadState(network: Network, postbox: Postbox, stateManager:
                         }
                         return .complete()
                     }
+                    if AlfaSettings.ghostRead {
+                        // AlfaGram ghost mode: read here only, the sender sees no read receipt (the signal is cold,
+                        // so the request above is never sent).
+                        pushSignal = .complete()
+                    }
 
                     if markedUnread {
                         pushSignal = pushSignal
