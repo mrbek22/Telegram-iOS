@@ -1,0 +1,67 @@
+name: AlfaGram iOS (imzosiz sinov build)
+
+# Qo'lda ishga tushiriladi. Haqiqiy imzo (Apple Developer akkaunti) qo'shilmaguncha
+# Telegram'ning "fake-codesigning" sertifikatlari bilan imzosiz IPA yig'iladi —
+# maqsad: kod kompilyatsiya bo'lishini tekshirish.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 340
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: '0'
+
+      - name: Xcode versiyasini tanlash
+        run: |
+          XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
+          sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Doimiy manba papkasi
+        run: |
+          set -x
+          sudo mkdir -p /Users/Shared
+          cp -R $GITHUB_WORKSPACE /Users/Shared/
+          mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
+
+      - name: Build
+        run: |
+          set -x
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          BAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"
+          cd $SOURCE_DIR
+
+          BUILD_NUMBER_OFFSET="$(cat build_number_offset)"
+          export COMMIT_COUNT=$(git rev-list --count HEAD)
+          export BUILD_NUMBER="$(($COMMIT_COUNT+$BUILD_NUMBER_OFFSET))"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
+          python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          python3 -u build-system/Make/Make.py \
+            --bazelUserRoot="$BAZEL_USER_ROOT" \
+            build \
+            --configurationPath="build-system/appstore-configuration.json" \
+            --codesigningInformationPath=build-system/fake-codesigning \
+            --configuration=release_arm64 \
+            --buildNumber="$BUILD_NUMBER"
+
+          OUTPUT_PATH="build/artifacts"
+          rm -rf "$OUTPUT_PATH"
+          mkdir -p "$OUTPUT_PATH"
+          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
+            cp "$f" "$OUTPUT_PATH/AlfaGram-unsigned.ipa"
+          done
+
+      - name: IPA ni saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: alfagram-ios-unsigned-${{ env.BUILD_NUMBER }}
+          path: /Users/Shared/telegram-ios/build/artifacts/AlfaGram-unsigned.ipa
+          retention-days: 14
