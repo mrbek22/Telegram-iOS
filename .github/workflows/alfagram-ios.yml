@@ -49,19 +49,23 @@ jobs:
             build \
             --configurationPath="build-system/appstore-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
-            --configuration=release_arm64 \
+            --configuration=debug_sim_arm64 \
+            --disableProvisioningProfiles \
             --buildNumber="$BUILD_NUMBER"
 
+          # Simulyator uchun build (Telegram'ning fake-codesigning profillari 2026-10-30 da eskirgan).
           OUTPUT_PATH="build/artifacts"
           rm -rf "$OUTPUT_PATH"
           mkdir -p "$OUTPUT_PATH"
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
-            cp "$f" "$OUTPUT_PATH/AlfaGram-unsigned.ipa"
+          find bazel-out/ -path "*/bin/Telegram/Telegram.ipa" -maxdepth 5 | head -1 | while read f; do
+            cp "$f" "$OUTPUT_PATH/AlfaGram-simulator.ipa"
           done
+          ls -la "$OUTPUT_PATH"
 
-      - name: IPA ni saqlash
+      - name: Natijani saqlash
         uses: actions/upload-artifact@v4
         with:
-          name: alfagram-ios-unsigned-${{ env.BUILD_NUMBER }}
-          path: /Users/Shared/telegram-ios/build/artifacts/AlfaGram-unsigned.ipa
+          name: alfagram-ios-sim-${{ env.BUILD_NUMBER }}
+          path: /Users/Shared/telegram-ios/build/artifacts/
+          if-no-files-found: warn
           retention-days: 14

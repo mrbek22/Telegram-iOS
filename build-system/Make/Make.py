@@ -648,6 +648,8 @@ def build(bazel, arguments):
         else:
             print('TelegramBuild: warning: --embedWatchApp requires a device configuration (debug_arm64 or release_arm64); ignored for simulator builds.')
     bazel_command_line.set_build_number(arguments.buildNumber)
+    if getattr(arguments, 'disableProvisioningProfiles', False):
+        bazel_command_line.set_disable_provisioning_profiles()
     bazel_command_line.set_custom_target(arguments.target)
     bazel_command_line.set_continue_on_error(arguments.continueOnError)
     bazel_command_line.set_show_actions(arguments.showActions)
@@ -1040,6 +1042,12 @@ if __name__ == '__main__':
         metavar='number'
     )
     add_project_and_build_common_arguments(buildParser)
+    buildParser.add_argument(
+        '--disableProvisioningProfiles',
+        action='store_true',
+        default=False,
+        help='AlfaGram: build without provisioning profiles (simulator / compile check).',
+    )
     buildParser.add_argument(
         '--configuration',
         choices=[
