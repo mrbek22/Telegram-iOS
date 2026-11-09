@@ -10,6 +10,12 @@ import EncryptionProvider
 /// delivery reports.
 extension ReplayContext {
     func applyAddMessages(_ messages: [StoreMessage], _ location: AddMessagesLocation) {
+        // AlfaGram: shaxsiy chatga kelgan xabar — yozish "yuborildi" bo'ladi
+        for message in messages {
+            if case let .Id(id) = message.id, id.peerId.namespace == Namespaces.Peer.CloudUser, message.flags.contains(.Incoming) {
+                AlfaTypingLog.messageReceived(accountPeerId: accountPeerId, userId: id.peerId, timestamp: message.timestamp)
+            }
+        }
         if case .UpperHistoryBlock = location {
             for message in messages {
                 if case let .Id(id) = message.id {

@@ -66,6 +66,7 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
     var requestOpenDisabledPeerFromSearch: ((EnginePeer, ChatListDisabledPeerReason) -> Void)?
     var requestAddContact: ((String) -> Void)?
     var openInvite: (() -> Void)?
+    var openAlfaProfileLog: (() -> Void)?
     var openQrScan: (() -> Void)?
     var openStories: ((EnginePeer, ASDisplayNode) -> Void)?
     
@@ -97,11 +98,14 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         self.stringsPromise.set(.single(self.presentationData.strings))
         
         var inviteImpl: (() -> Void)?
+        var alfaProfileLogImpl: (() -> Void)?
         
         let presentation = combineLatest(sortOrder, self.stringsPromise.get())
         |> map { sortOrder, strings -> ContactListPresentation in
             let options = [ContactListAdditionalOption(title: strings.Contacts_InviteFriends, icon: .generic(UIImage(bundleImageName: "Contact List/AddMemberIcon")!), action: {
                 inviteImpl?()
+            }), ContactListAdditionalOption(title: AlfaCyrillic.ui("Profil o'zgarishlari"), icon: .generic(UIImage(bundleImageName: "Contact List/LinkActionIcon")!), action: {
+                alfaProfileLogImpl?()
             })]
             switch sortOrder {
                 case .presence:
@@ -152,6 +156,9 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
             if let strongSelf = self {
                 strongSelf.openInvite?()
             }
+        }
+        alfaProfileLogImpl = { [weak self] in
+            self?.openAlfaProfileLog?()
         }
         
         contextAction = { [weak self] peer, node, gesture, location, isStories in

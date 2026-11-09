@@ -14,12 +14,32 @@ public enum AlfaSettings {
         case ghostTyping
         /// Reading a private chat or a group does not tell the server (no `messages.readHistory`).
         case ghostRead
+        /// Stories are viewed without telling their author (no `stories.readStories` / `incrementStoryViews`).
+        case stealthStories
+        /// Sponsored messages in channels are not loaded.
+        case blockAds
+        /// A suspicious link (lookalike bank/Telegram domain, APK download, punycode, raw IP…) asks before opening.
+        case linkGuard
+        /// "Copy ID" in the message context menu.
+        case showMessageId
+        /// Contacts' online sessions are recorded on this device (`AlfaOnlineLog`).
+        case onlineLog
+        /// Contacts' username / photo / phone / name changes are recorded on this device (`AlfaProfileLog`).
+        case profileLog
+        /// "Typed but did not send" in private chats is recorded on this device (`AlfaTypingLog`).
+        case typingLog
+        /// Uzbek interface in Cyrillic script (with the Uzbek language selected).
+        case cyrillicUi
+        /// Text typed in Latin is sent in Cyrillic.
+        case sendCyrillic
+        /// Saving and forwarding from chats that restrict it.
+        case unrestrictedSave
 
         public var defaultValue: Bool {
             switch self {
-            case .saveDeletedMessages, .saveEditHistory:
+            case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead:
+            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .unrestrictedSave:
                 return false
             }
         }
@@ -41,7 +61,7 @@ public enum AlfaSettings {
 
     public static func setValue(_ key: Key, _ value: Bool) {
         UserDefaults.standard.set(value, forKey: key.defaultsKey)
-        NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil)
+        NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": key.rawValue])
     }
 
     public static var saveDeletedMessages: Bool {
@@ -62,5 +82,63 @@ public enum AlfaSettings {
 
     public static var ghostRead: Bool {
         return value(.ghostRead)
+    }
+
+    public static var stealthStories: Bool {
+        return value(.stealthStories)
+    }
+
+    public static var blockAds: Bool {
+        return value(.blockAds)
+    }
+
+    public static var linkGuard: Bool {
+        return value(.linkGuard)
+    }
+
+    public static var showMessageId: Bool {
+        return value(.showMessageId)
+    }
+
+    public static var onlineLog: Bool {
+        return value(.onlineLog)
+    }
+
+    public static var profileLog: Bool {
+        return value(.profileLog)
+    }
+
+    public static var typingLog: Bool {
+        return value(.typingLog)
+    }
+
+    public static var cyrillicUi: Bool {
+        return value(.cyrillicUi)
+    }
+
+    public static var sendCyrillic: Bool {
+        return value(.sendCyrillic)
+    }
+
+    public static var unrestrictedSave: Bool {
+        return value(.unrestrictedSave)
+    }
+
+    // MARK: - Small persistent counters and flags (not switches)
+
+    public static func integer(_ name: String) -> Int {
+        return UserDefaults.standard.integer(forKey: "alfa_n_" + name)
+    }
+
+    public static func setInteger(_ name: String, _ value: Int) {
+        UserDefaults.standard.set(value, forKey: "alfa_n_" + name)
+    }
+
+    public static func flag(_ name: String) -> Bool {
+        return UserDefaults.standard.bool(forKey: "alfa_f_" + name)
+    }
+
+    public static func setFlag(_ name: String, _ value: Bool) {
+        UserDefaults.standard.set(value, forKey: "alfa_f_" + name)
     }
 }

@@ -167,6 +167,8 @@ func updatePeers(transaction: Transaction, accountPeerId: PeerId, peers: Accumul
                 }
                 
                 if !isMin {
+                    // AlfaGram: username / rasm / raqam / ism o'zgarishlari jurnali
+                    AlfaProfileLog.compare(transaction: transaction, accountPeerId: accountPeerId, previous: transaction.getPeer(user.peerId) as? TelegramUser, updated: telegramUser)
                     let isContact = (flags & (1 << 11)) != 0
                     _internal_updatePeerIsContact(transaction: transaction, user: telegramUser, isContact: isContact)
                 }
@@ -478,7 +480,9 @@ func updatePeerPresences(transaction: Transaction, accountPeerId: PeerId, peerPr
     }
         
     parsedPresences.removeValue(forKey: accountPeerId)
-        
+    // AlfaGram: kontaktlar onlayn tarixi
+    AlfaOnlineLog.record(transaction: transaction, accountPeerId: accountPeerId, presences: parsedPresences)
+
     transaction.updatePeerPresencesInternal(presences: parsedPresences, merge: { previous, updated in
         if let previous = previous as? TelegramUserPresence, let updated = updated as? TelegramUserPresence, previous.lastActivity != updated.lastActivity {
             return TelegramUserPresence(status: updated.status, lastActivity: max(previous.lastActivity, updated.lastActivity))
@@ -505,7 +509,9 @@ func updatePeerPresencesClean(transaction: Transaction, accountPeerId: PeerId, p
     if parsedPresences[accountPeerId] != nil {
         parsedPresences.removeValue(forKey: accountPeerId)
     }
-    
+    // AlfaGram: kontaktlar onlayn tarixi
+    AlfaOnlineLog.record(transaction: transaction, accountPeerId: accountPeerId, presences: parsedPresences)
+
     transaction.updatePeerPresencesInternal(presences: parsedPresences, merge: { previous, updated in
         if let previous = previous as? TelegramUserPresence, let updated = updated as? TelegramUserPresence, previous.lastActivity != updated.lastActivity {
             return TelegramUserPresence(status: updated.status, lastActivity: max(previous.lastActivity, updated.lastActivity))

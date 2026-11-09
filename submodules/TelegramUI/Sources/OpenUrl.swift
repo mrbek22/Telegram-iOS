@@ -16,6 +16,7 @@ import PresentationDataUtils
 import UrlWhitelist
 import OpenUserGeneratedUrl
 import DebugCompanionScreen
+import AlfaGramUI
 
 public struct ParsedSecureIdUrl {
     public let peerId: EnginePeer.Id
@@ -357,6 +358,18 @@ private func makeTelegramUrl(_ path: String, queryItems: [URLQueryItem] = []) ->
 }
 
 func openExternalUrlImpl(context: AccountContext, urlContext: OpenURLContext, url: String, forceExternal: Bool, presentationData: PresentationData, navigationController: NavigationController?, dismissInput: @escaping () -> Void) {
+    // AlfaGram: shubhali havola (soxta bank/Telegram sayti, APK, niqoblangan manzil) — ochishdan oldin ogohlantirish
+    if let warning = AlfaLinkGuard.warningText(for: url) {
+        let alert = textAlertController(context: context, title: AlfaCyrillic.ui("⚠️ Shubhali havola"), text: warning, actions: [
+            TextAlertAction(type: .defaultAction, title: AlfaCyrillic.ui("Ochmaslik"), action: {}),
+            TextAlertAction(type: .destructiveAction, title: AlfaCyrillic.ui("Baribir ochish"), action: {
+                AlfaLinkGuard.allowOnce(url)
+                openExternalUrlImpl(context: context, urlContext: urlContext, url: url, forceExternal: forceExternal, presentationData: presentationData, navigationController: navigationController, dismissInput: dismissInput)
+            })
+        ], actionLayout: .vertical)
+        context.sharedContext.presentGlobalController(alert, nil)
+        return
+    }
     // A login part hides the host a link opens (see `externalUrlWithLoginPart`). Every external link leaves through
     // here, whoever opens it, so here it is confirmed, unless a prompt that showed the real host was just accepted.
     if let loginPartUrl = externalUrlWithLoginPart(url), !consumeLoginPartConfirmation(loginPartUrl) {

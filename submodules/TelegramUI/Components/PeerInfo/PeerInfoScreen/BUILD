@@ -22,6 +22,7 @@ swift_library(
         "//submodules/AnimationUI",
         "//submodules/AppBundle",
         "//submodules/AsyncDisplayKit",
+        "//submodules/AlfaGramUI:AlfaGramUI",
         "//submodules/TelegramUI/Components/AvatarEditorScreen",
         "//submodules/AvatarNode",
         "//submodules/TelegramUI/Components/Stories/AvatarStoryIndicatorComponent",

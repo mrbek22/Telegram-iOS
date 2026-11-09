@@ -283,6 +283,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 4, label: .text(languageName.isEmpty ? presentationData.strings.Localization_LanguageName : languageName), text: presentationData.strings.Settings_AppLanguage, icon: PresentationResourcesSettings.language, action: {
         interaction.openSettings(.language)
     }))
+    // AlfaGram: rasmiy yordam guruhi
+    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 8, text: AlfaCyrillic.ui("Yordam guruhi"), icon: PresentationResourcesSettings.support, action: {
+        interaction.openSettings(.alfaHelp)
+    }))
     
     let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
     let isPremiumDisabled = premiumConfiguration.isPremiumDisabled

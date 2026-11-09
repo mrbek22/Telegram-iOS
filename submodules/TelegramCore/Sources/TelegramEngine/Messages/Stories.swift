@@ -2122,7 +2122,11 @@ func _internal_markStoryAsSeen(account: Account, peerId: PeerId, id: Int32, asPi
                 return .complete()
             }
             #endif
-            
+
+            // AlfaGram: anonim ko'rish — ko'rishlar soniga qo'shilmaydi
+            if AlfaSettings.stealthStories {
+                return .complete()
+            }
             return account.network.request(Api.functions.stories.incrementStoryViews(peer: inputPeer, id: [id]))
             |> `catch` { _ -> Signal<Api.Bool, NoError> in
                 return .single(.boolFalse)
@@ -2139,7 +2143,10 @@ func _internal_markStoryAsSeen(account: Account, peerId: PeerId, id: Int32, asPi
             
             #if DEBUG && false
             #else
-            _internal_addSynchronizeViewStoriesOperation(peerId: peerId, storyId: id, transaction: transaction)
+            // AlfaGram: anonim ko'rish — faqat shu telefonda "ko'rildi", muallifga bildirilmaydi
+            if !AlfaSettings.stealthStories {
+                _internal_addSynchronizeViewStoriesOperation(peerId: peerId, storyId: id, transaction: transaction)
+            }
             #endif
             
             return transaction.getPeer(peerId).flatMap(apiInputUser)

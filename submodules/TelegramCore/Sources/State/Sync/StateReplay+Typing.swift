@@ -8,6 +8,10 @@ import EncryptionProvider
 /// Typing activity and live typing drafts.
 extension ReplayContext {
     func applyAddPeerInputActivity(_ chatPeerId: PeerActivitySpace, _ peerId: PeerId?, _ activity: PeerInputActivity?) {
+        // AlfaGram: shaxsiy chatda yozish (yozdi-yubormadi jurnali)
+        if let peerId = peerId, peerId == chatPeerId.peerId, case .typingText? = activity {
+            AlfaTypingLog.typing(accountPeerId: accountPeerId, userId: peerId)
+        }
         if let peerId = peerId {
             if updatedTypingActivities[chatPeerId] == nil {
                 updatedTypingActivities[chatPeerId] = [peerId: activity]

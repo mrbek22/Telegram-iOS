@@ -227,16 +227,12 @@ extension PeerInfoScreenNode {
                 guard let strongSelf = self else {
                     return
                 }
-                var maximumAvailableAccounts: Int = 3
-                if accountAndPeer?.1.isPremium == true && !strongSelf.context.account.testingEnvironment {
-                    maximumAvailableAccounts = 4
-                }
+                // AlfaGram: 10 tagacha akkaunt, Premium shart emas
+                let maximumAvailableAccounts: Int = 10
+                let _ = accountAndPeer
                 var count: Int = 1
-                for (accountContext, peer, _) in accountsAndPeers {
+                for (accountContext, _, _) in accountsAndPeers {
                     if !accountContext.account.testingEnvironment {
-                        if peer.isPremium {
-                            maximumAvailableAccounts = 4
-                        }
                         count += 1
                     }
                 }
@@ -283,6 +279,9 @@ extension PeerInfoScreenNode {
             push(energySavingSettingsScreen(context: self.context))
         case .alfaGram:
             push(alfaGramSettingsController(context: self.context))
+        case .alfaHelp:
+            let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+            self.context.sharedContext.openExternalUrl(context: self.context, urlContext: .generic, url: "https://t.me/alfagram_chat", forceExternal: false, presentationData: presentationData, navigationController: self.controller?.navigationController as? NavigationController, dismissInput: {})
         case .businessSetup:
             guard let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
                 return

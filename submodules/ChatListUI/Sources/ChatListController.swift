@@ -344,7 +344,12 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         super.init(context: context, navigationBarPresentationData: nil)
         
         self.accessoryPanelContainer = ASDisplayNode()
-        
+
+        // AlfaGram: kontaktlar onlayn tarixi (Ghost rejimda ham)
+        if case let .chatList(alfaGroupId) = self.location, alfaGroupId == .root {
+            AlfaOnlineLog.startPolling(account: context.account)
+        }
+
         self.tabBarItemContextActionType = .always
         self.automaticallyControlPresentationContextLayout = false
         

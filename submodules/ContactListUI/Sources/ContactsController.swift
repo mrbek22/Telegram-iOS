@@ -25,6 +25,7 @@ import TelegramIntents
 import UndoUI
 import ShareController
 import SearchBarNode
+import AlfaGramUI
 
 private final class HeaderContextReferenceContentSource: ContextReferenceContentSource {
     private let controller: ViewController
@@ -255,6 +256,17 @@ public class ContactsController: ViewController {
             }
         }
         
+        self.contactsNode.openAlfaProfileLog = { [weak self] in
+            guard let strongSelf = self else {
+                return
+            }
+            (strongSelf.navigationController as? NavigationController)?.pushViewController(alfaProfileLogController(context: strongSelf.context), completion: {
+                if let strongSelf = self {
+                    strongSelf.contactsNode.contactListNode.listNode.clearHighlightAnimated(true)
+                }
+            })
+        }
+
         self.contactsNode.openInvite = { [weak self] in
             let _ = (DeviceAccess.authorizationStatus(subject: .contacts)
             |> take(1)
