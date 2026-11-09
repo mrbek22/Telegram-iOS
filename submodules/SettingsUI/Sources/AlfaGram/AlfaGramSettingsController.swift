@@ -14,6 +14,7 @@ private enum AlfaGramSettingsAction: Equatable {
     case profileLog
     case typingLog
     case helpGroup
+    case autoFolders
 }
 
 private final class AlfaGramSettingsControllerArguments {
@@ -105,6 +106,10 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(3, next(), .blockAds, ui("Telegram reklamalarini yashirish"), AlfaSettings.blockAds))
     entries.append(.info(3, next(), ui("Soxta bank, Click, Payme yoki Telegram saytlari, APK yuklovchi va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiradi.")))
 
+    entries.append(.header(7, next(), ui("PAPKALAR")))
+    entries.append(.action(7, next(), .autoFolders, ui("Avto papkalarni yaratish")))
+    entries.append(.info(7, next(), ui("Bir bosishda Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari qo'shiladi (bor bo'lganlari takrorlanmaydi).")))
+
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
     entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), AlfaSettings.unrestrictedSave))
     entries.append(.info(6, next(), ui("Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.")))
@@ -124,6 +129,7 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
     let revisionPromise = ValuePromise<Int32>(0, ignoreRepeated: false)
     var pushImpl: ((ViewController) -> Void)?
     var openHelpImpl: (() -> Void)?
+    var presentAlertImpl: ((String) -> Void)?
 
     let arguments = AlfaGramSettingsControllerArguments(toggle: { key, value in
         AlfaSettings.setValue(key, value)
@@ -145,6 +151,12 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
             pushImpl?(alfaTypingLogController(context: context))
         case .helpGroup:
             openHelpImpl?()
+        case .autoFolders:
+            let _ = (alfaCreateAutoFolders(context: context)
+            |> deliverOnMainQueue).start(next: { count in
+                let text = count == 0 ? AlfaCyrillic.ui("Barcha avto papkalar allaqachon bor (yoki papkalar soni chegarasiga yetgan).") : AlfaCyrillic.ui("\(count) ta papka qo'shildi. Chatlar ro'yxati tepasida ko'rinadi.")
+                presentAlertImpl?(text)
+            })
         }
     })
 
@@ -160,6 +172,10 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
     let controller = ItemListController(context: context, state: signal)
     pushImpl = { [weak controller] c in
         controller?.push(c)
+    }
+    presentAlertImpl = { [weak controller] text in
+        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        controller?.present(textAlertController(context: context, title: nil, text: text, actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
     }
     openHelpImpl = { [weak controller] in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }
