@@ -283,6 +283,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 4, label: .text(languageName.isEmpty ? presentationData.strings.Localization_LanguageName : languageName), text: presentationData.strings.Settings_AppLanguage, icon: PresentationResourcesSettings.language, action: {
         interaction.openSettings(.language)
     }))
+    // AlfaGram: shaxsiy havola (alfagram.uz/username) — ulashish
+    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 9, text: AlfaCyrillic.ui("Mening AlfaGram havolam"), icon: PresentationResourcesSettings.myProfile, action: {
+        interaction.openSettings(.alfaLink)
+    }))
     // AlfaGram: rasmiy yordam guruhi
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 8, text: AlfaCyrillic.ui("Yordam guruhi"), icon: PresentationResourcesSettings.support, action: {
         interaction.openSettings(.alfaHelp)

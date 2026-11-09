@@ -201,6 +201,7 @@ enum PeerInfoSettingsSection {
     case wallet
     case alfaGram
     case alfaHelp
+    case alfaLink
 }
 
 enum PeerInfoReportType {

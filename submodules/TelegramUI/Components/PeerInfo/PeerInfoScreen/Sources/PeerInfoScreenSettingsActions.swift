@@ -279,6 +279,23 @@ extension PeerInfoScreenNode {
             push(energySavingSettingsScreen(context: self.context))
         case .alfaGram:
             push(alfaGramSettingsController(context: self.context))
+        case .alfaLink:
+            let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: self.context.account.peerId))
+            |> deliverOnMainQueue).startStandalone(next: { [weak self] peer in
+                guard let self else {
+                    return
+                }
+                var link = "https://alfagram.uz"
+                if let username = peer?.addressName, !username.isEmpty {
+                    link = "https://alfagram.uz/\(username)"
+                }
+                let activity = UIActivityViewController(activityItems: [link], applicationActivities: nil)
+                if let popover = activity.popoverPresentationController {
+                    popover.sourceView = self.view
+                    popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 1.0, height: 1.0)
+                }
+                self.controller?.present(activity, animated: true, completion: nil)
+            })
         case .alfaHelp:
             let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
             self.context.sharedContext.openExternalUrl(context: self.context, urlContext: .generic, url: "https://t.me/alfagram_chat", forceExternal: false, presentationData: presentationData, navigationController: self.controller?.navigationController as? NavigationController, dismissInput: {})
