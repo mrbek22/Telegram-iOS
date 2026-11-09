@@ -1261,7 +1261,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
                     let presentationData = context.sharedContext.currentPresentationData.with { $0 }
                     var parts: [String] = ["Hozirgi:\n\(message.text)"]
                     for entry in alfaEditHistory.reversed() {
-                        let date = stringForMessageTimestamp(timestamp: entry.date, dateTimeFormat: presentationData.dateTimeFormat)
+                        let date = stringForFullDate(timestamp: entry.date, strings: presentationData.strings, dateTimeFormat: presentationData.dateTimeFormat)
                         parts.append("\(date) gacha:\n\(entry.text)")
                     }
                     controllerInteraction.presentController(textAlertController(
