@@ -154,6 +154,21 @@ func alfaMergeMessageAttributes(previous: [MessageAttribute], updated: inout [Me
 
 /// AlfaGram: "Lotincha yozsam, kirillda yuborilsin" — plain text typed in Latin goes out in Cyrillic.
 /// Text with formatting (entities) is left as is: converting changes its length and would shift the entities.
+/// AlfaGram: with `AlfaSettings.silentSend` every outgoing message is sent without a notification sound.
+func alfaSilentOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
+    guard AlfaSettings.silentSend else {
+        return message
+    }
+    return message.withUpdatedAttributes { attributes in
+        if attributes.contains(where: { $0 is NotificationInfoMessageAttribute }) {
+            return attributes
+        }
+        var attributes = attributes
+        attributes.append(NotificationInfoMessageAttribute(flags: .muted))
+        return attributes
+    }
+}
+
 func alfaCyrillicOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
     guard AlfaSettings.sendCyrillic, case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message else {
         return message

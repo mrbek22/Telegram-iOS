@@ -760,7 +760,7 @@ private func opportunisticallyTransformOutgoingMedia(network: Network, postbox: 
 
 public func enqueueMessages(account: Account, peerId: PeerId, messages: [EnqueueMessage]) -> Signal<[MessageId?], NoError> {
     // AlfaGram: lotincha yozilgan oddiy matn kirillda yuboriladi (sozlama yoqilgan bo'lsa)
-    let messages = messages.map(alfaCyrillicOutgoing)
+    let messages = messages.map(alfaCyrillicOutgoing).map(alfaSilentOutgoing)
     let signal: Signal<[(Bool, EnqueueMessage)], NoError>
     if let transformOutgoingMessageMedia = account.transformOutgoingMessageMedia {
         signal = opportunisticallyTransformOutgoingMedia(network: account.network, postbox: account.postbox, transformOutgoingMessageMedia: transformOutgoingMessageMedia, messages: messages, userInteractive: true)

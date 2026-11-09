@@ -34,12 +34,16 @@ public enum AlfaSettings {
         case sendCyrillic
         /// Saving and forwarding from chats that restrict it.
         case unrestrictedSave
+        /// The stories row above the chat list is not shown.
+        case hideStories
+        /// Every outgoing message is sent without a notification sound.
+        case silentSend
 
         public var defaultValue: Bool {
             switch self {
             case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .unrestrictedSave:
+            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .unrestrictedSave, .hideStories, .silentSend:
                 return false
             }
         }
@@ -118,6 +122,14 @@ public enum AlfaSettings {
 
     public static var sendCyrillic: Bool {
         return value(.sendCyrillic)
+    }
+
+    public static var hideStories: Bool {
+        return value(.hideStories)
+    }
+
+    public static var silentSend: Bool {
+        return value(.silentSend)
     }
 
     public static var unrestrictedSave: Bool {

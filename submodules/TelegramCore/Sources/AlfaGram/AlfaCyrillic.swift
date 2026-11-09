@@ -23,6 +23,58 @@ public enum AlfaCyrillic {
         return AlfaSettings.cyrillicUi ? toCyrillic(s) : s
     }
 
+    public static func hasCyrillic(_ s: String) -> Bool {
+        for c in s.unicodeScalars {
+            if c.value >= 0x0400 && c.value <= 0x04FF {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static let cyrillicToLatin: [Character: String] = [
+        "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
+        "ж": "j", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+        "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+        "ф": "f", "х": "x", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sh", "ъ": "’",
+        "ы": "i", "ь": "", "э": "e", "ю": "yu", "я": "ya", "ў": "o‘", "қ": "q",
+        "ғ": "g‘", "ҳ": "h"
+    ]
+
+    /// Uzbek Cyrillic → Latin (word-initial "е" → "ye"; an all-caps word stays all caps).
+    public static func toLatin(_ input: String) -> String {
+        if input.isEmpty {
+            return input
+        }
+        let chars = Array(input)
+        var result = ""
+        for i in 0 ..< chars.count {
+            let c = chars[i]
+            let lowerString = String(c).lowercased()
+            guard lowerString.count == 1, let lc = lowerString.first, var r = cyrillicToLatin[lc] else {
+                result.append(c)
+                continue
+            }
+            if lc == "е" {
+                let prev: Character? = i > 0 ? chars[i - 1] : nil
+                if prev == nil || !(prev!.isLetter) {
+                    r = "ye"
+                }
+            }
+            if c.isUppercase && !r.isEmpty {
+                let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
+                let wordUp = next != nil && next!.isLetter && next!.isUppercase
+                if wordUp {
+                    r = r.uppercased()
+                } else {
+                    r = r.prefix(1).uppercased() + String(r.dropFirst())
+                }
+            }
+            result.append(r)
+        }
+        return result
+    }
+
     public static func hasLatinLetters(_ s: String) -> Bool {
         for c in s.unicodeScalars {
             if (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") {

@@ -2569,6 +2569,10 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
 }
 
 func shouldDisplayStoriesInChatListHeader(storySubscriptions: EngineStorySubscriptions, isHidden: Bool) -> Bool {
+    // AlfaGram: story qatorini yashirish
+    if AlfaSettings.hideStories {
+        return false
+    }
     if !storySubscriptions.items.isEmpty {
         return true
     }

@@ -106,6 +106,11 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(3, next(), .blockAds, ui("Telegram reklamalarini yashirish"), AlfaSettings.blockAds))
     entries.append(.info(3, next(), ui("Soxta bank, Click, Payme yoki Telegram saytlari, APK yuklovchi va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiradi.")))
 
+    entries.append(.header(8, next(), ui("CHATLAR")))
+    entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), AlfaSettings.hideStories))
+    entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), AlfaSettings.silentSend))
+    entries.append(.info(8, next(), ui("Ovozsiz yuborilgan xabar qabul qiluvchida tovushsiz keladi. Story qatori chatlar ro'yxatiga qaytganingizda yashiriladi.")))
+
     entries.append(.header(7, next(), ui("PAPKALAR")))
     entries.append(.action(7, next(), .autoFolders, ui("Avto papkalarni yaratish")))
     entries.append(.info(7, next(), ui("Bir bosishda Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari qo'shiladi (bor bo'lganlari takrorlanmaydi).")))

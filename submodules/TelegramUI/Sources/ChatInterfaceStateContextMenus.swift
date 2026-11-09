@@ -1262,6 +1262,31 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
             })))
         }
 
+        // AlfaGram: xabar matnini kirill <-> lotinga o'girib ko'rsatish (nusxalash bilan)
+        let alfaTranslitSource = message.text
+        if !alfaTranslitSource.isEmpty && (AlfaCyrillic.hasCyrillic(alfaTranslitSource) || AlfaCyrillic.hasLatinLetters(alfaTranslitSource)) {
+            let alfaToLatin = AlfaCyrillic.hasCyrillic(alfaTranslitSource)
+            actions.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui(alfaToLatin ? "Lotinga o'girish" : "Kirillga o'girish"), icon: { theme in
+                return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Translate"), color: theme.actionSheet.primaryTextColor)
+            }, action: { c, _ in
+                c?.dismiss(completion: {
+                    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+                    let alfaResult = alfaToLatin ? AlfaCyrillic.toLatin(alfaTranslitSource) : AlfaCyrillic.toCyrillic(alfaTranslitSource)
+                    controllerInteraction.presentController(textAlertController(
+                        context: context,
+                        title: AlfaCyrillic.ui(alfaToLatin ? "Lotin alifbosida" : "Kirill alifbosida"),
+                        text: alfaResult,
+                        actions: [
+                            TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Close, action: {}),
+                            TextAlertAction(type: .defaultAction, title: AlfaCyrillic.ui("Nusxalash"), action: {
+                                UIPasteboard.general.string = alfaResult
+                            })
+                        ]
+                    ), nil)
+                })
+            })))
+        }
+
         // AlfaGram: the earlier texts of an edited message.
         let alfaEditHistory = message.alfaEditHistory
         if !alfaEditHistory.isEmpty {
