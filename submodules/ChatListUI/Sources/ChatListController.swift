@@ -345,9 +345,10 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         
         self.accessoryPanelContainer = ASDisplayNode()
 
-        // AlfaGram: kontaktlar onlayn tarixi (Ghost rejimda ham)
+        // AlfaGram: kontaktlar onlayn tarixi (Ghost rejimda ham) va ilovaga kirgandagi salomlashuv
         if case let .chatList(alfaGroupId) = self.location, alfaGroupId == .root {
             AlfaOnlineLog.startPolling(account: context.account)
+            AlfaChatListGreeting.shared.attach(context: context)
         }
 
         self.tabBarItemContextActionType = .always
@@ -7007,12 +7008,13 @@ private final class ChatListLocationContext {
                     isReorderingTabs,
                     peerStatus,
                     parentController.updatedPresentationData.1,
-                    storyPostingAvailable
-                ).startStrict(next: { [weak self] networkState, proxy, passcode, stateAndFilterId, isReorderingTabs, peerStatus, presentationData, storyPostingAvailable in
+                    storyPostingAvailable,
+                    AlfaChatListGreeting.shared.text.get()
+                ).startStrict(next: { [weak self] networkState, proxy, passcode, stateAndFilterId, isReorderingTabs, peerStatus, presentationData, storyPostingAvailable, alfaGreeting in
                     guard let self else {
                         return
                     }
-                    
+
                     self.updateChatList(
                         networkState: networkState,
                         proxy: proxy,
@@ -7021,7 +7023,8 @@ private final class ChatListLocationContext {
                         isReorderingTabs: isReorderingTabs,
                         peerStatus: peerStatus,
                         presentationData: presentationData,
-                        storyPostingAvailable: storyPostingAvailable
+                        storyPostingAvailable: storyPostingAvailable,
+                        alfaGreeting: alfaGreeting
                     )
                 })
             } else {
@@ -7290,7 +7293,8 @@ private final class ChatListLocationContext {
         isReorderingTabs: Bool,
         peerStatus: NetworkStatusTitle.Status?,
         presentationData: PresentationData,
-        storyPostingAvailable: Bool
+        storyPostingAvailable: Bool,
+        alfaGreeting: String? = nil
     ) {
         let defaultTitle: String
         switch location {
@@ -7453,7 +7457,9 @@ private final class ChatListLocationContext {
             case .updating:
                 titleContent = NetworkStatusTitle(text: presentationData.strings.State_Updating, activity: true, hasProxy: isRoot && hasProxy, connectsViaProxy: connectsViaProxy, isPasscodeSet: isRoot && isPasscodeSet, isManuallyLocked: isRoot && isManuallyLocked, peerStatus: peerStatus)
             case .online:
-                titleContent = NetworkStatusTitle(text: defaultTitle, activity: false, hasProxy: isRoot && hasProxy, connectsViaProxy: connectsViaProxy, isPasscodeSet: isRoot && isPasscodeSet, isManuallyLocked: isRoot && isManuallyLocked, peerStatus: peerStatus)
+                // AlfaGram: ilovaga kirganda sarlavha o'rnida ~3 s salomlashuv
+                let alfaTitle = (isRoot && stateAndFilterId.state.selectedPeerIds.isEmpty) ? (alfaGreeting ?? defaultTitle) : defaultTitle
+                titleContent = NetworkStatusTitle(text: alfaTitle, activity: false, hasProxy: isRoot && hasProxy, connectsViaProxy: connectsViaProxy, isPasscodeSet: isRoot && isPasscodeSet, isManuallyLocked: isRoot && isManuallyLocked, peerStatus: peerStatus)
             }
             
             if titleContent.hasProxy {

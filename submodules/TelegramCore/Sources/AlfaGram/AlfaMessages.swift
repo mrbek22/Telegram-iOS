@@ -151,3 +151,20 @@ func alfaMergeMessageAttributes(previous: [MessageAttribute], updated: inout [Me
         }
     }
 }
+
+/// AlfaGram: "Lotincha yozsam, kirillda yuborilsin" — plain text typed in Latin goes out in Cyrillic.
+/// Text with formatting (entities) is left as is: converting changes its length and would shift the entities.
+func alfaCyrillicOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
+    guard AlfaSettings.sendCyrillic, case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message else {
+        return message
+    }
+    if text.isEmpty || !AlfaCyrillic.hasLatinLetters(text) {
+        return message
+    }
+    for attribute in attributes {
+        if let entities = attribute as? TextEntitiesMessageAttribute, !entities.entities.isEmpty {
+            return message
+        }
+    }
+    return .message(text: AlfaCyrillic.toCyrillic(text), attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+}

@@ -270,6 +270,10 @@ public extension Peer {
     }
     
     var isCopyProtectionEnabled: Bool {
+        // AlfaGram: cheklovsiz saqlash
+        if AlfaSettings.unrestrictedSave {
+            return false
+        }
         switch self {
         case let group as TelegramGroup:
             return group.flags.contains(.copyProtectionEnabled)

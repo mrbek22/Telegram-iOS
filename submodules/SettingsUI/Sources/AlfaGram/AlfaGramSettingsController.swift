@@ -105,6 +105,10 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(3, next(), .blockAds, ui("Telegram reklamalarini yashirish"), AlfaSettings.blockAds))
     entries.append(.info(3, next(), ui("Soxta bank, Click, Payme yoki Telegram saytlari, APK yuklovchi va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiradi.")))
 
+    entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
+    entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), AlfaSettings.unrestrictedSave))
+    entries.append(.info(6, next(), ui("Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.")))
+
     entries.append(.header(4, next(), ui("TIL")))
     entries.append(.toggle(4, next(), .cyrillicUi, ui("Kirill alifbosi (Ўзбекча)"), AlfaSettings.cyrillicUi))
     entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), AlfaSettings.sendCyrillic))
@@ -125,6 +129,10 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
         AlfaSettings.setValue(key, value)
         if key == .onlineLog && value {
             AlfaOnlineLog.startPolling(account: context.account)
+        }
+        if key == .cyrillicUi {
+            let languageCode = context.sharedContext.currentPresentationData.with { $0 }.strings.primaryComponent.languageCode
+            let _ = context.engine.localization.downloadAndApplyLocalization(accountManager: context.sharedContext.accountManager, languageCode: languageCode).start()
         }
         revisionPromise.set(0)
     }, open: { action in

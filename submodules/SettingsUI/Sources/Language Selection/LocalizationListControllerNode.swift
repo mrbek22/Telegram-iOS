@@ -589,7 +589,13 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                         continue
                     }
                     existingIds.insert(info.languageCode)
-                    entries.append(.localization(index: entries.count, info: info, type: .official, selected: info.languageCode == activeLanguageCode, activity: applyingCode == info.languageCode, revealed: revealedCode == info.languageCode, editing: false))
+                    // AlfaGram: o'zbek tilining kirill varianti — o'sha "uz" tili + kirill alifbosi
+                    let alfaIsUzbek = info.languageCode.lowercased() == "uz"
+                    entries.append(.localization(index: entries.count, info: info, type: .official, selected: info.languageCode == activeLanguageCode && !(alfaIsUzbek && AlfaSettings.cyrillicUi), activity: applyingCode == info.languageCode, revealed: revealedCode == info.languageCode, editing: false))
+                    if alfaIsUzbek && !existingIds.contains(alfaUzbekCyrillicCode) {
+                        existingIds.insert(alfaUzbekCyrillicCode)
+                        entries.append(.localization(index: entries.count, info: alfaUzbekCyrillicInfo(info), type: .official, selected: info.languageCode == activeLanguageCode && AlfaSettings.cyrillicUi, activity: false, revealed: false, editing: false))
+                    }
                 }
             } else {
                 for _ in 0 ..< 15 {
@@ -761,6 +767,8 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
     }
     
     private func selectLocalization(_ info: LocalizationInfo) -> Void {
+        // AlfaGram: "Ўзбекча (кирилл)" — o'zbek tili kirill alifbosi bilan
+        let info = alfaResolveLocalization(info)
         let applyImpl: () -> Void = { [weak self] in
             guard let strongSelf = self else {
                 return
@@ -845,4 +853,23 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
     func scrollToTop() {
         self.listNode.transaction(deleteIndices: [], insertIndicesAndItems: [], updateIndicesAndItems: [], options: [.Synchronous, .LowLatency], scrollToItem: ListViewScrollToItem(index: 0, position: .top(0.0), animated: true, curve: .Default(duration: nil), directionHint: .Up), updateSizeAndInsets: nil, stationaryItemRange: nil, updateOpaqueState: nil, completion: { _ in })
     }
+}
+
+// AlfaGram helpers
+let alfaUzbekCyrillicCode = "uz-cyrl"
+
+func alfaUzbekCyrillicInfo(_ uzbek: LocalizationInfo) -> LocalizationInfo {
+    return LocalizationInfo(languageCode: alfaUzbekCyrillicCode, baseLanguageCode: uzbek.baseLanguageCode, customPluralizationCode: uzbek.customPluralizationCode, title: "Uzbek (Cyrillic)", localizedTitle: "Ўзбекча (кирилл)", isOfficial: true, totalStringCount: uzbek.totalStringCount, translatedStringCount: uzbek.translatedStringCount, platformUrl: uzbek.platformUrl)
+}
+
+/// The Cyrillic row selects the Uzbek language with the Cyrillic switch on; the Uzbek row turns it off.
+func alfaResolveLocalization(_ info: LocalizationInfo) -> LocalizationInfo {
+    if info.languageCode == alfaUzbekCyrillicCode {
+        AlfaSettings.setValue(.cyrillicUi, true)
+        return LocalizationInfo(languageCode: "uz", baseLanguageCode: info.baseLanguageCode, customPluralizationCode: info.customPluralizationCode, title: "Uzbek", localizedTitle: "O'zbekcha", isOfficial: true, totalStringCount: info.totalStringCount, translatedStringCount: info.translatedStringCount, platformUrl: info.platformUrl)
+    }
+    if info.languageCode.lowercased() == "uz" {
+        AlfaSettings.setValue(.cyrillicUi, false)
+    }
+    return info
 }

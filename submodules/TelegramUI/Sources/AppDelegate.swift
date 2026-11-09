@@ -57,6 +57,7 @@ import MTProtoRustEngine
 
 #if DEBUG
 import AlertComponent
+import AlfaGramUI
 #endif
 
 private let handleVoipNotifications = false
@@ -445,6 +446,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         self.window = window
         self.nativeWindow = window
+        // AlfaGram: ochilishda logo chiziladi
+        AlfaSplashOverlay.show(in: window)
         
         hostView.containerView.layer.addSublayer(MetalEngine.shared.rootLayer)
         // On the first start after an update, compile the pipelines that would otherwise stall their first use.
@@ -1421,6 +1424,15 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
 
                     self.mainWindow.debugAction = nil
                     self.mainWindow.viewController = context.rootController
+                    // AlfaGram: asosiy ekran tayyor — ochilish animatsiyasi tugaydi; birinchi marta slaydlar, baholash
+                    AlfaSplashOverlay.setReady()
+                    if firstTime {
+                        let alfaWindow = self.window
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6, execute: {
+                            AlfaOnboardingController.presentIfNeeded(window: alfaWindow)
+                        })
+                        AlfaReview.onAppReady(window: alfaWindow)
+                    }
                     
                     #if DEBUG
                     if firstTime {
@@ -1518,6 +1530,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 |> deliverOnMainQueue).start(next: { _ in
                     progressDisposable.dispose()
                     self.mainWindow.present(context.rootController, on: .root)
+                    AlfaSplashOverlay.setReady()
                 }))
             } else {
                 authContextReadyDisposable.set(nil)
