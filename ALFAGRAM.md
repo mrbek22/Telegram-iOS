@@ -36,4 +36,6 @@ Android'dagi funksiyalar (APK qo'riqchisidan tashqari) ko'chirildi:
 - Havola himoyasi (`AlfaGramUI/AlfaLinkGuard.swift`, `TelegramUI/Sources/OpenUrl.swift`), reklama bloki, xabar menyusida «ID nusxalash», profilda ID va taxminiy ro'yxatdan o'tgan sana.
 - Ochilish animatsiyasi (`AlfaGramUI/AlfaSplashOverlay.swift`), chatlar sarlavhasida salomlashuv (`ChatListUI/AlfaChatListGreeting.swift`), birinchi ochilishda 3 slayd, App Store baholash so'rovi.
 - Kirill: Til → «Ўзбекча (кирилл)», «lotincha yozsam kirillda yuborilsin»; yangi userlarga Night mavzu; 10 akkaunt.
-- Ko'chirilmagan: avto papkalar (iOS'da Sozlamalar → Papkalar → tavsiya etilgan papkalar bor), Wrapped, story ko'ruvchilar tarixi, muqobil ikonkalar.
+- Avto papkalar (bir bosishda 5 ta), story'ni Premium'siz saqlash, Sozlamalarda «Mening AlfaGram havolam», profil ⋮ → «Onlayn tarixi», xabar menyusida kirill ↔ lotin, story qatorini yashirish, hammasini ovozsiz yuborish.
+- Ko'chirilmagan: Wrapped, story ko'ruvchilar tarixi, muqobil ikonkalar, ovozsiz chatlarni yashirish, ixcham ro'yxat, ovozli xabarlarni avto saqlash, himoyalangan chatdan forward (qayta yuklash).
+- Oxirgi yashil build: run 42571082192 (commit 0ff2db8d), artefakt `alfagram-ios-sim-36550` (simulyator). Telefonda sinash uchun Apple Developer akkaunti kerak.
