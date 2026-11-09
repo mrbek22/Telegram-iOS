@@ -31,6 +31,37 @@ jobs:
           cp -R $GITHUB_WORKSPACE /Users/Shared/
           mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
 
+      # Make.py Bazel'ni anonim curl bilan yuklaydi; runner'da GitHub ba'zan 92 baytlik xato
+      # qaytaradi. Shu sabab Bazel oldindan token bilan va qayta urinishlar bilan yuklanadi.
+      - name: Bazel'ni oldindan yuklash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd /Users/Shared/telegram-ios
+          VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["bazel"].split(":")[0])')
+          SHA=$(python3 -c 'import json;v=json.load(open("versions.json"))["bazel"];print(v.split(":")[1] if ":" in v else "")')
+          NAME="bazel-$VERSION-darwin-arm64"
+          mkdir -p build-input
+          for i in 1 2 3 4 5 6; do
+            rm -f "build-input/$NAME"
+            gh release download "$VERSION" -R bazelbuild/bazel -p "$NAME" -D build-input --clobber \
+              || curl -fL --retry 3 --retry-delay 10 -H "Authorization: Bearer $GH_TOKEN" -o "build-input/$NAME" "https://github.com/bazelbuild/bazel/releases/download/$VERSION/$NAME" \
+              || true
+            if [ -f "build-input/$NAME" ]; then
+              GOT=$(shasum -a 256 "build-input/$NAME" | cut -d' ' -f1)
+              if [ -z "$SHA" ] || [ "$GOT" = "$SHA" ]; then
+                chmod +x "build-input/$NAME"
+                ls -la "build-input/$NAME"
+                exit 0
+              fi
+              echo "SHA mos emas: $GOT (kutilgan $SHA)"
+            fi
+            echo "Urinish $i muvaffaqiyatsiz, kutamiz..."
+            sleep $((i * 20))
+          done
+          echo "Bazel yuklanmadi"
+          exit 1
+
       - name: Build
         run: |
           set -x
