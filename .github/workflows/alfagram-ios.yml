@@ -75,14 +75,35 @@ jobs:
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
 
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
-          python3 -u build-system/Make/Make.py \
-            --bazelUserRoot="$BAZEL_USER_ROOT" \
-            build \
-            --configurationPath="build-system/appstore-configuration.json" \
-            --codesigningInformationPath=build-system/fake-codesigning \
-            --configuration=debug_sim_arm64 \
-            --disableProvisioningProfiles \
-            --buildNumber="$BUILD_NUMBER"
+
+          # GitHub release yuklamalari vaqtincha 5xx qaytarsa (anonim so'rovlar cheklanganda),
+          # build kutib qayta ishga tushiriladi; yuklangan paketlar Bazel keshida qoladi.
+          # Kod (kompilyatsiya) xatosida qayta urinilmaydi.
+          set +e
+          for attempt in 1 2 3 4 5 6; do
+            python3 -u build-system/Make/Make.py \
+              --bazelUserRoot="$BAZEL_USER_ROOT" \
+              build \
+              --configurationPath="build-system/appstore-configuration.json" \
+              --codesigningInformationPath=build-system/fake-codesigning \
+              --configuration=debug_sim_arm64 \
+              --disableProvisioningProfiles \
+              --buildNumber="$BUILD_NUMBER" 2>&1 | tee /tmp/alfa-build.log
+            status=${PIPESTATUS[0]}
+            if [ "$status" = "0" ]; then
+              break
+            fi
+            if grep -qE "Error downloading|GET returned (5[0-9][0-9]|429)|Connection reset|timed out" /tmp/alfa-build.log && ! grep -qE "\.swift:[0-9]+:[0-9]+: error" /tmp/alfa-build.log; then
+              echo "Tarmoq xatosi (urinish $attempt), $((attempt * 90)) s kutib qayta urinamiz..."
+              sleep $((attempt * 90))
+              continue
+            fi
+            exit "$status"
+          done
+          if [ "$status" != "0" ]; then
+            exit "$status"
+          fi
+          set -e
 
           # Simulyator uchun build (Telegram'ning fake-codesigning profillari 2026-10-30 da eskirgan).
           OUTPUT_PATH="build/artifacts"
