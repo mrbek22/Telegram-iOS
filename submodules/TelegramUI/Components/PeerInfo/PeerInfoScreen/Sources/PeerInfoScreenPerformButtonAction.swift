@@ -14,6 +14,7 @@ import TelegramNotices
 import AlertComponent
 import WalletContext
 import WalletSendScreen
+import AlfaGramUI
 
 extension PeerInfoScreenNode {
     func performButtonAction(key: PeerInfoHeaderButtonKey, buttonNode: PeerInfoHeaderButtonNode?, gesture: ContextGesture?) {
@@ -563,6 +564,19 @@ extension PeerInfoScreenNode {
                                 self?.openStartSecretChat()
                             })))
                         }
+                    }
+                    
+                    // AlfaGram: shu odamning onlayn tarixi (qachon kirib-chiqqani)
+                    if AlfaSettings.onlineLog && strongSelf.peerId.namespace == Namespaces.Peer.CloudUser && user.botInfo == nil && !user.isDeleted {
+                        items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Onlayn tarixi"), icon: { theme in
+                            generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Time"), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] _, f in
+                            f(.dismissWithoutContent)
+                            guard let self else {
+                                return
+                            }
+                            self.controller?.push(alfaOnlineSessionsController(context: self.context, peer: peer))
+                        })))
                     }
                     
                     if user.botInfo == nil && data.isContact, case let .user(peer) = strongSelf.data?.peer, let phone = peer.phone {
