@@ -193,6 +193,20 @@ func infoItems(
                 interaction.requestLayout(animated)
             }))
         }
+        // AlfaGram: foydalanuvchi ID'si (bosilsa nusxalanadi) va taxminiy ro'yxatdan o'tgan vaqti
+        if user.botInfo == nil {
+            let alfaUserId = user.id.id._internalGetInt64Value()
+            items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 3100, label: "ID", text: "\(alfaUserId)", textColor: .primary, action: { _, _ in
+                UIPasteboard.general.string = "\(alfaUserId)"
+            }, requestLayout: { animated in
+                interaction.requestLayout(animated)
+            }))
+            if let alfaRegistered = AlfaAccountAge.format(userId: alfaUserId) {
+                items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 3101, label: AlfaCyrillic.ui("Ro'yxatdan o'tgan (taxminan)"), text: alfaRegistered, textColor: .primary, action: nil, requestLayout: { animated in
+                    interaction.requestLayout(animated)
+                }))
+            }
+        }
         if let mainUsername = user.addressName {
             var additionalUsernames: String?
             let usernames = user.usernames.filter { $0.isActive && $0.username != mainUsername }

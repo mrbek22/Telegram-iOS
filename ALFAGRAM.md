@@ -27,3 +27,13 @@ Ish tarmog'i: `alfagram`.
    faqat havola himoyasi).
 7. **Apple qoidalari** — himoyalangan kontentni saqlash va shunga o'xshash funksiyalar App Store tekshiruvidan
    o'tmasligi mumkin; ular masofadan (AlfaConfig) o'chiriladigan bo'ladi.
+
+## Holat (2026-11-09)
+
+Android'dagi funksiyalar (APK qo'riqchisidan tashqari) ko'chirildi:
+- Sozlamalar → AlfaGram: xabarlar, Ghost (onlayn/yozyapti/o'qildi/anonim story), kuzatuv jurnallari, xavfsizlik, cheklovsiz, til, yordam guruhi.
+- Kuzatuv (faqat telefonda, `TelegramCore/Sources/AlfaGram/AlfaLogs.swift`): onlayn tarixi, profil o'zgarishlari (Kontaktlar → «Profil o'zgarishlari» ham), yozdi-yubormadi.
+- Havola himoyasi (`AlfaGramUI/AlfaLinkGuard.swift`, `TelegramUI/Sources/OpenUrl.swift`), reklama bloki, xabar menyusida «ID nusxalash», profilda ID va taxminiy ro'yxatdan o'tgan sana.
+- Ochilish animatsiyasi (`AlfaGramUI/AlfaSplashOverlay.swift`), chatlar sarlavhasida salomlashuv (`ChatListUI/AlfaChatListGreeting.swift`), birinchi ochilishda 3 slayd, App Store baholash so'rovi.
+- Kirill: Til → «Ўзбекча (кирилл)», «lotincha yozsam kirillda yuborilsin»; yangi userlarga Night mavzu; 10 akkaunt.
+- Ko'chirilmagan: avto papkalar (iOS'da Sozlamalar → Papkalar → tavsiya etilgan papkalar bor), Wrapped, story ko'ruvchilar tarixi, muqobil ikonkalar.
