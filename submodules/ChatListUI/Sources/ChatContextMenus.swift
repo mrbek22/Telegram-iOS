@@ -107,6 +107,7 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
 
         return combineLatest(
             context.engine.peers.updatedChatListFilters()
+            |> map(AlfaLocalTabs.withoutLocal)
             |> take(1),
             context.engine.peers.getPinnedItemIds(location: location)
         )

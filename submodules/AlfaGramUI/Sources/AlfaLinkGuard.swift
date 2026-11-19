@@ -66,14 +66,14 @@ public enum AlfaLinkGuard {
         let path = url.path.lowercased()
         var result: [String] = []
         if path.hasSuffix(".apk") || path.hasSuffix(".apks") || path.hasSuffix(".xapk") {
-            result.append("Havola dastur (APK) yuklab beradi")
+            result.append(AlfaStrings.tr("Havola dastur (APK) yuklab beradi"))
         }
         if host.hasPrefix("xn--") || host.contains(".xn--") {
-            result.append("Manzil boshqa alifbo harflari bilan niqoblangan (\(host))")
+            result.append(AlfaStrings.f("Manzil boshqa alifbo harflari bilan niqoblangan ({0})", host))
         }
         let ipParts = host.split(separator: ".")
         if ipParts.count == 4 && ipParts.allSatisfy({ !$0.isEmpty && $0.count <= 3 && $0.allSatisfy({ $0.isNumber }) }) {
-            result.append("Manzil sayt nomi emas, raqamli IP")
+            result.append(AlfaStrings.tr("Manzil sayt nomi emas, raqamli IP"))
         }
         let labels = host.split(whereSeparator: { $0 == "." || $0 == "-" }).map(String.init)
         for item in official {
@@ -92,7 +92,7 @@ public enum AlfaLinkGuard {
                 isOfficial = true
             }
             if !isOfficial {
-                result.append("Sayt o'zini «\(brand)» qilib ko'rsatyapti, lekin rasmiy manzil emas (\(host))")
+                result.append(AlfaStrings.f("Sayt o'zini «{0}» qilib ko'rsatyapti, lekin rasmiy manzil emas ({1})", brand, host))
             }
             break
         }
@@ -100,7 +100,7 @@ public enum AlfaLinkGuard {
         if badTlds.contains(tld) {
             let haystack = host + path
             if lureWords.contains(where: { haystack.contains($0) }) {
-                result.append("Sovg'a/bonus/premium va'da qiluvchi shubhali sayt")
+                result.append(AlfaStrings.tr("Sovg'a/bonus/premium va'da qiluvchi shubhali sayt"))
             }
         }
         return result
@@ -123,7 +123,7 @@ public enum AlfaLinkGuard {
         for reason in found {
             text += "• " + reason + "\n"
         }
-        text += "\nBunday saytlar Telegram akkauntingiz, karta ma'lumotlaringiz yoki SMS kodingizni o'g'irlashi mumkin. Kodni hech kimga bermang."
+        text += AlfaStrings.tr("\nBunday saytlar Telegram akkauntingiz, karta ma'lumotlaringiz yoki SMS kodingizni o'g'irlashi mumkin. Kodni hech kimga bermang.")
         return AlfaCyrillic.ui(text)
     }
 

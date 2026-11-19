@@ -41,9 +41,9 @@ public enum AlfaSettings {
 
         public var defaultValue: Bool {
             switch self {
-            case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog:
+            case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .unrestrictedSave, .hideStories, .silentSend:
+            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend:
                 return false
             }
         }
@@ -133,6 +133,11 @@ public enum AlfaSettings {
     }
 
     public static var unrestrictedSave: Bool {
+        // One-time switch-on for builds where it used to be off by default (user request, 2026-11-20).
+        if !flag("unrestrictedSaveOnV2") {
+            setFlag("unrestrictedSaveOnV2", true)
+            UserDefaults.standard.set(true, forKey: Key.unrestrictedSave.defaultsKey)
+        }
         return value(.unrestrictedSave)
     }
 

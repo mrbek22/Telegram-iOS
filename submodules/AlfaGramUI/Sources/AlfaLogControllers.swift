@@ -99,9 +99,9 @@ private func alfaDayKey(_ timestamp: Int32) -> Int {
 private func alfaDuration(_ seconds: Int32) -> String {
     let minutes = max(1, Int(seconds) / 60)
     if minutes < 60 {
-        return alfaUi("\(minutes) daq")
+        return AlfaCyrillic.ui(AlfaStrings.f("{0} daq", "\(minutes)"))
     }
-    return alfaUi("\(minutes / 60) soat \(minutes % 60) daq")
+    return AlfaCyrillic.ui(AlfaStrings.f("{0} soat {1} daq", "\(minutes / 60)", "\(minutes % 60)"))
 }
 
 private func alfaPeerName(_ peer: EnginePeer?, _ peerId: EnginePeer.Id, _ presentationData: PresentationData) -> String {
@@ -366,7 +366,7 @@ public func alfaTypingLogController(context: AccountContext) -> ViewController {
             let peer = peers[entry.peerId]
             let time = stringForMessageTimestamp(timestamp: entry.time, dateTimeFormat: presentationData.dateTimeFormat)
             let seconds = max(1, entry.lastTyping - entry.time)
-            result.append(.row(section, id, peer, alfaPeerName(peer, entry.peerId, presentationData), time, alfaUi("Yozdi (\(seconds) soniya), lekin yubormadi"), false))
+            result.append(.row(section, id, peer, alfaPeerName(peer, entry.peerId, presentationData), time, AlfaCyrillic.ui(AlfaStrings.f("Yozdi ({0} soniya), lekin yubormadi", "\(seconds)")), false))
         }
         return result
     }, clear: {

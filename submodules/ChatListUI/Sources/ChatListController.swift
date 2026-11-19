@@ -1011,6 +1011,10 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     }
     
     func tabContextGesture(id: Int32?, sourceNode: ContextExtractedContentContainingNode?, sourceView: ContextExtractedContentContainingView?, gesture: ContextGesture?, keepInPlace: Bool, isDisabled: Bool) {
+        if let id, AlfaLocalTabs.isLocal(id) {
+            gesture?.cancel()
+            return
+        }
         let context = self.context
         let filterPeersAreMuted: Signal<(areMuted: Bool, peerIds: [EnginePeer.Id])?, NoError> = self.context.engine.peers.currentChatListFilters()
         |> take(1)

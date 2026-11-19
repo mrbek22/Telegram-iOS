@@ -117,7 +117,8 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
             }))
         }
         
-        if !settings.accountsAndPeers.isEmpty {
+        // AlfaGram: the accounts block ("Hisoblar") is always shown, so a second account can be added in one tap.
+        do {
             for (peerAccountContext, peer, badgeCount) in settings.accountsAndPeers {
                 let mappedContext = ItemListPeerItem.Context.custom(ItemListPeerItem.Context.Custom(
                     accountPeerId: peerAccountContext.account.peerId,

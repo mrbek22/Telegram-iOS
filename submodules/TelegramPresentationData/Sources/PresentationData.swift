@@ -138,6 +138,7 @@ public final class PresentationData: Equatable {
 
 /// AlfaGram: Uzbek interface in Cyrillic (AlfaSettings.cyrillicUi) — the Latin strings are transliterated.
 public func alfaCyrillicDict(_ dict: [String: String], languageCode: String) -> [String: String] {
+    AlfaStrings.languageCode = languageCode
     if AlfaSettings.cyrillicUi && languageCode.lowercased().hasPrefix("uz") {
         return AlfaCyrillic.convertLocalization(dict)
     }
@@ -444,7 +445,7 @@ public func currentPresentationDataAndSettings(accountManager: AccountManager<Te
         if let localizationSettings = localizationSettings {
             stringsValue = PresentationStrings(primaryComponent: PresentationStrings.Component(languageCode: localizationSettings.primaryComponent.languageCode, localizedName: localizationSettings.primaryComponent.localizedName, pluralizationRulesCode: localizationSettings.primaryComponent.customPluralizationCode, dict: alfaCyrillicDict(dictFromLocalization(localizationSettings.primaryComponent.localization), languageCode: localizationSettings.primaryComponent.languageCode)), secondaryComponent: localizationSettings.secondaryComponent.flatMap({ PresentationStrings.Component(languageCode: $0.languageCode, localizedName: $0.localizedName, pluralizationRulesCode: $0.customPluralizationCode, dict: dictFromLocalization($0.localization)) }), groupingSeparator: dateTimeFormat.groupingSeparator)
         } else {
-            stringsValue = defaultPresentationStrings
+            stringsValue = defaultPresentationStrings; AlfaStrings.languageCode = "en"
         }
         let nameDisplayOrder = contactSettings.nameDisplayOrder
         let nameSortOrder = currentPersonNameSortOrder()
@@ -867,7 +868,7 @@ public func updatedPresentationData(accountManager: AccountManager<TelegramAccou
                         if let localizationSettings = localizationSettings {
                             stringsValue = PresentationStrings(primaryComponent: PresentationStrings.Component(languageCode: localizationSettings.primaryComponent.languageCode, localizedName: localizationSettings.primaryComponent.localizedName, pluralizationRulesCode: localizationSettings.primaryComponent.customPluralizationCode, dict: alfaCyrillicDict(dictFromLocalization(localizationSettings.primaryComponent.localization), languageCode: localizationSettings.primaryComponent.languageCode)), secondaryComponent: localizationSettings.secondaryComponent.flatMap({ PresentationStrings.Component(languageCode: $0.languageCode, localizedName: $0.localizedName, pluralizationRulesCode: $0.customPluralizationCode, dict: dictFromLocalization($0.localization)) }), groupingSeparator: dateTimeFormat.groupingSeparator)
                         } else {
-                            stringsValue = defaultPresentationStrings
+                            stringsValue = defaultPresentationStrings; AlfaStrings.languageCode = "en"
                         }
                         let nameDisplayOrder = contactSettings.nameDisplayOrder
                         let nameSortOrder = currentPersonNameSortOrder()
@@ -896,7 +897,7 @@ private func bubblelessPresentationData(mediaBox: MediaBox, themeSettings: Prese
     if let localizationSettings = localizationSettings {
         stringsValue = PresentationStrings(primaryComponent: PresentationStrings.Component(languageCode: localizationSettings.primaryComponent.languageCode, localizedName: localizationSettings.primaryComponent.localizedName, pluralizationRulesCode: localizationSettings.primaryComponent.customPluralizationCode, dict: alfaCyrillicDict(dictFromLocalization(localizationSettings.primaryComponent.localization), languageCode: localizationSettings.primaryComponent.languageCode)), secondaryComponent: localizationSettings.secondaryComponent.flatMap({ PresentationStrings.Component(languageCode: $0.languageCode, localizedName: $0.localizedName, pluralizationRulesCode: $0.customPluralizationCode, dict: dictFromLocalization($0.localization)) }), groupingSeparator: dateTimeFormat.groupingSeparator)
     } else {
-        stringsValue = defaultPresentationStrings
+        stringsValue = defaultPresentationStrings; AlfaStrings.languageCode = "en"
     }
     let nameSortOrder = currentPersonNameSortOrder()
     

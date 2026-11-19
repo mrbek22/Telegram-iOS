@@ -326,7 +326,8 @@ filegroup(
     ]),
 )
 
-alternate_icon_folders = [
+# AlfaGram: no alternate icons (they are Telegram's logos, and lacked the iPad sizes — ITMS-90892).
+alfa_unused_alternate_icon_folders = [
     "BlackIcon",
     "BlackClassicIcon",
     "BlackFilledIcon",
@@ -340,6 +341,8 @@ alternate_icon_folders = [
     "PremiumBlack",
     "PremiumTurbo",
 ]
+
+alternate_icon_folders = []
 
 composer_icon_folders = ["Telegram"]
 
@@ -365,6 +368,8 @@ filegroup(
     name = "LaunchScreen",
     srcs = glob([
         "Telegram-iOS/Base.lproj/LaunchScreen.xib",
+        "Telegram-iOS/AlfaLaunchLogo@2x.png",
+        "Telegram-iOS/AlfaLaunchLogo@3x.png",
     ]),
 )
 
@@ -1765,6 +1770,8 @@ plist_fragment(
     <string>When you send your location to your friends, Telegram needs access to show them a map. You also need this to send locations from an Apple Watch.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>When you send your location to your friends, Telegram needs access to show them a map.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>When you share your live location with friends, AlfaGram needs access to keep updating it on their map.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>We need this so that you can record and share voice messages and videos with sound.</string>
     <key>NSMotionUsageDescription</key>
@@ -1782,12 +1789,7 @@ plist_fragment(
         <string>INSendMessageIntent</string>
         <string>RemindAboutChatIntent</string>
     </array>
-    <key>UIAppFonts</key>
-    <array>
-        <string>AremacFS-Regular.otf</string>
-        <string>AremacFS-Semibold.otf</string>
-    </array>
-    <key>UIApplicationSceneManifest</key>
+<key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>
         <false/>

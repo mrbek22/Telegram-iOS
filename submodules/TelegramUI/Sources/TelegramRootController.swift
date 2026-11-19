@@ -81,6 +81,8 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     
     /// The Contacts screen `openContacts()` pushed; `getContactsController()` returns it while it is open.
     private weak var contactsController: ContactsController?
+    /// AlfaGram: Contacts as a root tab.
+    private var alfaContactsTabController: ContactsController?
     public var callListController: CallListController?
     public var chatListController: ChatListController?
     public var accountSettingsController: PeerInfoScreen?
@@ -155,7 +157,7 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
     }
     
     public func getContactsController() -> ViewController? {
-        return self.contactsController
+        return self.contactsController ?? self.alfaContactsTabController
     }
     
     public func getChatsController() -> ViewController? {
@@ -217,6 +219,10 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         if showCallsTab {
             controllers.append(callListController)
         }
+        let alfaContactsTab = ContactsController(context: self.context)
+        alfaContactsTab.alfaConfigureAsTab()
+        self.alfaContactsTabController = alfaContactsTab
+        controllers.append(alfaContactsTab)
         if showNewsTab {
             controllers.append(newsController)
         }
@@ -259,6 +265,9 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         var controllers: [ViewController] = []
         if showCallsTab {
             controllers.append(self.callListController!)
+        }
+        if let alfaContactsTab = self.alfaContactsTabController {
+            controllers.append(alfaContactsTab)
         }
         if showNewsTab, let newsController = self.newsController {
             controllers.append(newsController)
@@ -913,11 +922,15 @@ public final class TelegramRootController: NavigationController, TelegramRootCon
         }
         
         self.popToRoot(animated: false)
-    
+
+        if let alfaContactsTab = self.alfaContactsTabController, let index = rootTabController.controllers.firstIndex(where: { $0 === alfaContactsTab }) {
+            rootTabController.selectedIndex = index
+            return
+        }
         if let index = rootTabController.controllers.firstIndex(where: { $0 is PeerInfoScreenImpl }) {
             rootTabController.selectedIndex = index
         }
-        
+
         let contactsController = ContactsController(context: self.context)
         self.contactsController = contactsController
         self.pushViewController(contactsController)

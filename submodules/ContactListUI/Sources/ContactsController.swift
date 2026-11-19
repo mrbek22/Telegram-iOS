@@ -127,7 +127,21 @@ public class ContactsController: ViewController {
     required public init(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
+    /// AlfaGram: the screen is also a root tab (Calls · Contacts · Chats · Settings).
+    private var alfaIsTab = false
+
+    public func alfaConfigureAsTab() {
+        self.alfaIsTab = true
+        let icon = UIImage(bundleImageName: "Chat List/Tabs/IconContacts")
+        self.tabBarItem.title = self.presentationData.strings.Contacts_TabTitle
+        self.tabBarItem.image = icon
+        self.tabBarItem.selectedImage = icon
+        if !self.presentationData.reduceMotion {
+            self.tabBarItem.animationName = "TabContacts"
+        }
+    }
+
     deinit {
         self.presentationDataDisposable?.dispose()
         self.actionDisposable.dispose()
@@ -136,7 +150,10 @@ public class ContactsController: ViewController {
     
     private func updateThemeAndStrings() {
         self.statusBar.statusBarStyle = self.presentationData.theme.rootController.statusBarStyle.style
-        
+        if self.alfaIsTab {
+            self.tabBarItem.title = self.presentationData.strings.Contacts_TabTitle
+        }
+
         self.title = self.presentationData.strings.Contacts_Title
         self.navigationItem.backBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Back, style: .plain, target: nil, action: nil)
     }

@@ -791,7 +791,8 @@ public extension TelegramEngine {
         }
 
         public func updatedChatListFilters() -> Signal<[ChatListFilter], NoError> {
-            return _internal_updatedChatListFilters(postbox: self.account.postbox, hiddenIds: self.account.viewTracker.hiddenChatListFilterIds)
+            // AlfaGram: local automatic tabs while the account has no folders of its own.
+            return alfaWithLocalChatListTabs(postbox: self.account.postbox, _internal_updatedChatListFilters(postbox: self.account.postbox, hiddenIds: self.account.viewTracker.hiddenChatListFilterIds))
         }
         
         public func chatListFiltersAreSynced() -> Signal<Bool, NoError> {
@@ -803,7 +804,8 @@ public extension TelegramEngine {
         }
 
         public func currentChatListFilters() -> Signal<[ChatListFilter], NoError> {
-            return _internal_currentChatListFilters(postbox: self.account.postbox)
+            return alfaWithLocalChatListTabs(postbox: self.account.postbox, _internal_currentChatListFilters(postbox: self.account.postbox))
+            |> take(1)
         }
 
         public func markChatListFeaturedFiltersAsSeen() -> Signal<Never, NoError> {

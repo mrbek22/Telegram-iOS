@@ -341,6 +341,7 @@ public func chatListFilterPresetListController(context: AccountContext, mode: Ch
     var presentControllerImpl: ((ViewController) -> Void)?
     
     let filtersWithCountsSignal = context.engine.peers.updatedChatListFilters()
+    |> map(AlfaLocalTabs.withoutLocal)
     |> distinctUntilChanged
     |> mapToSignal { filters -> Signal<[(ChatListFilter, Int)], NoError> in
         return .single(filters.map { filter -> (ChatListFilter, Int) in

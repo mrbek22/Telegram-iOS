@@ -20,7 +20,8 @@ public enum AlfaCyrillic {
 
     /// AlfaGram's own texts: converted while the Cyrillic interface is on.
     public static func ui(_ s: String) -> String {
-        return AlfaSettings.cyrillicUi ? toCyrillic(s) : s
+        let text = AlfaStrings.tr(s)
+        return (AlfaSettings.cyrillicUi && AlfaStrings.lang == .uz) ? toCyrillic(text) : text
     }
 
     public static func hasCyrillic(_ s: String) -> Bool {

@@ -389,13 +389,28 @@ public struct PresentationResourcesChat {
                 }
                 
                 context.clear(CGRect(origin: CGPoint(), size: size))
-                let color: UIColor
+                var color: UIColor
                 if [.day, .night].contains(theme.referenceTheme.baseTheme) && !theme.chat.message.outgoing.bubble.withWallpaper.hasSingleFillColor {
                     color = .white
                 } else {
                     color = theme.chat.inputPanel.actionControlForegroundColor
                 }
-                
+                // AlfaGram: the glyph must stand out from the button it sits on (Night's white accent drew a white
+                // arrow on a white disc).
+                func alfaLuminance(_ c: UIColor) -> CGFloat {
+                    var r: CGFloat = 0.0, g: CGFloat = 0.0, b: CGFloat = 0.0, a: CGFloat = 0.0
+                    if !c.getRed(&r, green: &g, blue: &b, alpha: &a) {
+                        var w: CGFloat = 0.0
+                        c.getWhite(&w, alpha: &a)
+                        return w
+                    }
+                    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+                }
+                let alfaButtonLuminance = alfaLuminance(theme.chat.inputPanel.panelControlAccentColor)
+                if abs(alfaButtonLuminance - alfaLuminance(color)) < 0.35 {
+                    color = alfaButtonLuminance > 0.6 ? .black : .white
+                }
+
                 if let image = generateTintedImage(image: UIImage(bundleImageName: "Chat/Input/Text/SendIcon"), color: color) {
                     image.draw(in: CGRect(origin: CGPoint(x: floorToScreenPixels((size.width - image.size.width) * 0.5), y: floorToScreenPixels((size.height - image.size.height) * 0.5)), size: image.size))
                 }

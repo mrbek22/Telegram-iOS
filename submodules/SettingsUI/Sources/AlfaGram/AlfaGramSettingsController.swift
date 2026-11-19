@@ -111,10 +111,6 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), AlfaSettings.silentSend))
     entries.append(.info(8, next(), ui("Ovozsiz yuborilgan xabar qabul qiluvchida tovushsiz keladi. Story qatori chatlar ro'yxatiga qaytganingizda yashiriladi.")))
 
-    entries.append(.header(7, next(), ui("PAPKALAR")))
-    entries.append(.action(7, next(), .autoFolders, ui("Avto papkalarni yaratish")))
-    entries.append(.info(7, next(), ui("Bir bosishda Shaxsiy, Guruhlar, Kanallar, Botlar va O'qilmagan papkalari qo'shiladi (bor bo'lganlari takrorlanmaydi).")))
-
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
     entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), AlfaSettings.unrestrictedSave))
     entries.append(.info(6, next(), ui("Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.")))
@@ -124,9 +120,6 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), AlfaSettings.sendCyrillic))
     entries.append(.info(4, next(), ui("O'zbek tili tanlangan bo'lsa, ilova kirillda ko'rinadi. Tilni Sozlamalar → Til bo'limidan tanlang.")))
 
-    entries.append(.header(5, next(), ui("ALFAGRAM")))
-    entries.append(.action(5, next(), .helpGroup, ui("Yordam guruhi (@alfagram_chat)")))
-    entries.append(.info(5, next(), ui("Savol, taklif va xatolar haqida yozing.")))
     return entries
 }
 

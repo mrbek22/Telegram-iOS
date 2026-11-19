@@ -56,6 +56,16 @@ public enum AlfaAccountAge {
         let months = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentyabr", "oktyabr", "noyabr", "dekabr"]
         let components = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: Date(timeIntervalSince1970: Double(t)))
         let month = max(1, min(12, components.month ?? 1))
-        return AlfaCyrillic.ui("~ \(components.year ?? 0)-yil \(months[month - 1])")
+        let year = components.year ?? 0
+        switch AlfaStrings.lang {
+        case .uz:
+            return AlfaCyrillic.ui("~ \(year)-yil \(months[month - 1])")
+        case .en:
+            let en = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+            return "~ \(en[month - 1]) \(year)"
+        case .ru:
+            let ru = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
+            return "~ \(ru[month - 1]) \(year)"
+        }
     }
 }

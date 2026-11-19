@@ -1270,6 +1270,7 @@ private func chatFoldersSearchableItems(context: AccountContext) -> [SettingsSea
             isVisible: false,
             present: { context, _, present in
                 let filtersWithCounts = context.engine.peers.updatedChatListFilters()
+                |> map(AlfaLocalTabs.withoutLocal)
                 |> distinctUntilChanged
                 |> mapToSignal { filters -> Signal<[(ChatListFilter, Int)], NoError> in
                     return .single(filters.map { filter -> (ChatListFilter, Int) in
