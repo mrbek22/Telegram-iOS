@@ -51,7 +51,8 @@ def import_certificates(certificatesPath):
                 '-k',
                 keychain_name,
                 '-P',
-                '',
+                # AlfaGram: p12 paroli (OpenSSL 3 parolsiz p12'ni macOS import qila olmaydi)
+                os.environ.get('ALFA_P12_PASSWORD', '') if file_path.endswith('.p12') else '',
                 '-T',
                 '/usr/bin/codesign',
                 '-T',
