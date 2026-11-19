@@ -21,6 +21,24 @@ public enum AlfaLocalTabs {
         return isLocal(filter.id)
     }
 
+    /// The monochrome icon (SF Symbol) a local tab shows in the chat list instead of its emoji title.
+    public static func symbolName(_ id: Int32) -> String? {
+        switch id {
+        case personalId:
+            return "person.fill"
+        case mutualId:
+            return "person.2.fill"
+        case groupsId:
+            return "bubble.left.and.bubble.right.fill"
+        case channelsId:
+            return "megaphone.fill"
+        case botsId:
+            return "cpu"
+        default:
+            return nil
+        }
+    }
+
     /// Removes the local tabs (for screens that edit the account's real folders).
     public static func withoutLocal(_ filters: [ChatListFilter]) -> [ChatListFilter] {
         return filters.filter { !isLocal($0.id) }

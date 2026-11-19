@@ -91,7 +91,12 @@ private final class ItemNode: ASDisplayNode {
     
     private var theme: PresentationTheme?
     private var currentTitle: (ChatFolderTitle, ChatFolderTitle)?
-    
+
+    /// AlfaGram: a local automatic tab shows a monochrome icon instead of its title.
+    private var alfaIconName: String?
+    private var alfaIconColor: UIColor?
+    private var alfaIconViews: [UIImageView] = []
+
     private var pointerInteraction: PointerInteraction?
     
     init(context: AccountContext, pressed: @escaping (Bool) -> Void, requestedDeletion: @escaping () -> Void, contextGesture: @escaping (ContextExtractedContentContainingNode, ContextGesture, Bool) -> Void) {
@@ -333,6 +338,41 @@ private final class ItemNode: ASDisplayNode {
         }
     }
     
+    func alfaUpdateIcon(_ name: String?, color: UIColor) {
+        let textNodes: [ImmediateTextNodeWithEntities] = [self.titleNode, self.titleActiveNode, self.shortTitleNode, self.shortTitleActiveNode]
+        if let name {
+            // The title text only reserves the icon's width; the icon is drawn on top.
+            let placeholder = "\u{2003}\u{2002}"
+            for node in textNodes {
+                if node.attributedText?.string != placeholder {
+                    node.attributedText = NSAttributedString(string: placeholder, font: Font.medium(14.0), textColor: .clear)
+                }
+            }
+        }
+        if self.alfaIconName == name && self.alfaIconColor == color {
+            return
+        }
+        self.alfaIconName = name
+        self.alfaIconColor = color
+        for view in self.alfaIconViews {
+            view.removeFromSuperview()
+        }
+        self.alfaIconViews = []
+        guard let name else {
+            return
+        }
+        let image = UIImage(systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: 16.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate)
+        for node in textNodes {
+            let view = UIImageView(image: image)
+            view.tintColor = color
+            view.contentMode = .center
+            view.frame = node.view.bounds
+            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            node.view.addSubview(view)
+            self.alfaIconViews.append(view)
+        }
+    }
+
     func updateLayout(height: CGFloat, transition: ContainedViewLayoutTransition) -> (width: CGFloat, shortWidth: CGFloat) {
         let titleSize = self.titleNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
         let _ = self.titleActiveNode.updateLayout(CGSize(width: 160.0, height: .greatestFiniteMagnitude))
@@ -830,7 +870,12 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
             }
             
             itemNode.updateText(strings: presentationData.strings, title: filter.title(strings: presentationData.strings), shortTitle: i == 0 ? filter.shortTitle(strings: presentationData.strings) : filter.title(strings: presentationData.strings), unreadCount: unreadCount, unreadHasUnmuted: unreadHasUnmuted, isNoFilter: isNoFilter, selectionFraction: selectionFraction, isEditing: isEditing, isReordering: isReordering, canReorderAllChats: canReorderAllChats, isDisabled: isDisabled, presentationData: presentationData, transition: itemNodeTransition)
-        }
+            var alfaIconName: String?
+            if case let .filter(alfaFilterId, _, _) = filter {
+                alfaIconName = AlfaLocalTabs.symbolName(alfaFilterId)
+            }
+            itemNode.alfaUpdateIcon(alfaIconName, color: presentationData.theme.chat.inputPanel.panelControlColor)
+}
         var removeKeys: [ChatListFilterTabEntryId] = []
         for (id, _) in self.itemNodes {
             if !filters.contains(where: { $0.id == id }) {
