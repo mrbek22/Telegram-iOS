@@ -1,0 +1,133 @@
+name: AlfaGram iOS → TestFlight
+
+# Qo'lda ishga tushiriladi. Haqiqiy App Store imzosi bilan release build yig'adi va
+# App Store Connect'ga (TestFlight) yuklaydi.
+# Kerakli secrets: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, IOS_DIST_P12_B64, IOS_TEAM_ID,
+#                  TELEGRAM_API_ID, TELEGRAM_API_HASH
+# IPA artefakt sifatida saqlanmaydi (ichida api_hash bor, repo ochiq).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    runs-on: xcode-27
+    timeout-minutes: 340
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: '0'
+
+      - name: Xcode versiyasini tanlash
+        run: |
+          XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
+          sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Doimiy manba papkasi
+        run: |
+          sudo mkdir -p /Users/Shared
+          cp -R $GITHUB_WORKSPACE /Users/Shared/
+          mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
+
+      - name: Bazel'ni oldindan yuklash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd /Users/Shared/telegram-ios
+          VERSION=$(python3 -c 'import json;print(json.load(open("versions.json"))["bazel"].split(":")[0])')
+          SHA=$(python3 -c 'import json;v=json.load(open("versions.json"))["bazel"];print(v.split(":")[1] if ":" in v else "")')
+          NAME="bazel-$VERSION-darwin-arm64"
+          mkdir -p build-input
+          for i in 1 2 3 4 5 6; do
+            rm -f "build-input/$NAME"
+            gh release download "$VERSION" -R bazelbuild/bazel -p "$NAME" -D build-input --clobber \
+              || curl -fL --retry 3 --retry-delay 10 -H "Authorization: Bearer $GH_TOKEN" -o "build-input/$NAME" "https://github.com/bazelbuild/bazel/releases/download/$VERSION/$NAME" \
+              || true
+            if [ -f "build-input/$NAME" ]; then
+              GOT=$(shasum -a 256 "build-input/$NAME" | cut -d' ' -f1)
+              if [ -z "$SHA" ] || [ "$GOT" = "$SHA" ]; then chmod +x "build-input/$NAME"; exit 0; fi
+              echo "SHA mos emas: $GOT"
+            fi
+            sleep $((i * 20))
+          done
+          exit 1
+
+      - name: Imzolash (sertifikat + profillar) va konfiguratsiya
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          TG_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TG_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+        run: |
+          cd /Users/Shared/telegram-ios
+          python3 -m pip install --quiet --break-system-packages pyjwt cryptography 2>/dev/null || python3 -m pip install --quiet pyjwt cryptography
+          python3 build-system/alfagram-ci/prepare_signing.py "$RUNNER_TEMP/codesigning" uz.alfagram.app
+          python3 build-system/Make/ImportCertificates.py --path "$RUNNER_TEMP/codesigning/certs"
+          security find-identity -v -p codesigning | grep -c "Apple Distribution" || (echo "Imzo identifikatsiyasi topilmadi"; exit 1)
+          python3 - <<'EOF'
+          import json, os
+          cfg = {
+            "bundle_id": "uz.alfagram.app",
+            "api_id": os.environ["TG_API_ID"],
+            "api_hash": os.environ["TG_API_HASH"],
+            "team_id": os.environ["IOS_TEAM_ID"],
+            "is_internal_build": "false",
+            "is_appstore_build": "true",
+            "appstore_id": "6836811995",
+            "app_specific_url_scheme": "alfagram",
+            "premium_iap_product_id": "uz.alfagram.premium.unused",
+            "enable_siri": False,
+            "enable_icloud": False
+          }
+          json.dump(cfg, open(os.environ["RUNNER_TEMP"] + "/alfagram-configuration.json", "w"))
+          print("konfiguratsiya yozildi")
+          EOF
+
+      - name: Release build (App Store imzosi bilan)
+        run: |
+          SOURCE_DIR=/Users/Shared/telegram-ios
+          BAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"
+          cd $SOURCE_DIR
+          BUILD_NUMBER_OFFSET="$(cat build_number_offset)"
+          BUILD_NUMBER="$(($(git rev-list --count HEAD)+$BUILD_NUMBER_OFFSET+${{ github.run_attempt }}))"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          set +e
+          for attempt in 1 2 3 4 5 6; do
+            python3 -u build-system/Make/Make.py \
+              --bazelUserRoot="$BAZEL_USER_ROOT" \
+              build \
+              --configurationPath="$RUNNER_TEMP/alfagram-configuration.json" \
+              --codesigningInformationPath="$RUNNER_TEMP/codesigning" \
+              --configuration=release_arm64 \
+              --buildNumber="$BUILD_NUMBER" \
+              --outputBuildArtifactsPath="$RUNNER_TEMP/artifacts" 2>&1 | tee /tmp/alfa-build.log
+            status=${PIPESTATUS[0]}
+            if [ "$status" = "0" ]; then break; fi
+            if grep -qE "Error downloading|GET returned (5[0-9][0-9]|429)|Connection reset|timed out" /tmp/alfa-build.log && ! grep -qE "\.swift:[0-9]+:[0-9]+: error" /tmp/alfa-build.log; then
+              echo "Tarmoq xatosi (urinish $attempt), kutib qayta urinamiz..."
+              sleep $((attempt * 90))
+              continue
+            fi
+            exit "$status"
+          done
+          if [ "$status" != "0" ]; then exit "$status"; fi
+          ls -la "$RUNNER_TEMP/artifacts"
+
+      - name: TestFlight'ga yuklash
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s\n' "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          IPA="$RUNNER_TEMP/artifacts/Telegram.ipa"
+          ls -la "$IPA"
+          xcrun altool --upload-app -t ios -f "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+          rm -f ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
