@@ -28,6 +28,7 @@ import PresentationDataUtils
 import TelegramIntents
 import AccountUtils
 import CoreSpotlight
+import AlfaGramUI
 import TelegramAudio
 import DebugSettingsUI
 import CrashReporting
