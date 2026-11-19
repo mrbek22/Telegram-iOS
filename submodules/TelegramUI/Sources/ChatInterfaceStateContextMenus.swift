@@ -1254,7 +1254,7 @@ func contextMenuForChatPresentationInterfaceState(chatPresentationInterfaceState
         // AlfaGram: xabar ID'sini nusxalash
         if AlfaSettings.showMessageId && message.id.namespace == Namespaces.Message.Cloud {
             let alfaMessageId = message.id.id
-            actions.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("ID nusxalash") + " (\(alfaMessageId))", icon: { theme in
+            actions.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("ID nusxalash"), icon: { theme in
                 return generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Copy"), color: theme.actionSheet.primaryTextColor)
             }, action: { _, f in
                 UIPasteboard.general.string = "\(alfaMessageId)"
