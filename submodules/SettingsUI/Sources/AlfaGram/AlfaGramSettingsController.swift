@@ -17,6 +17,7 @@ private enum AlfaGramSettingsAction: Equatable {
     case helpGroup
     case autoFolders
     case hiddenAccounts
+    case about
 }
 
 private final class AlfaGramSettingsControllerArguments {
@@ -30,7 +31,7 @@ private final class AlfaGramSettingsControllerArguments {
 }
 
 /// AlfaGram: a settings icon — a white SF Symbol on a colored rounded tile (like the system Settings).
-private func alfaSettingsIcon(_ symbol: String, _ color: UInt32) -> UIImage? {
+func alfaSettingsIcon(_ symbol: String, _ color: UInt32) -> UIImage? {
     let size = CGSize(width: 29.0, height: 29.0)
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { _ in
@@ -139,6 +140,8 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(4, next(), .cyrillicUi, ui("Kirill alifbosi (Ўзбекча)"), ui("O'zbek tili tanlanganda ilova kirillda"), "character.book.closed.fill", 0x30b8a8, AlfaSettings.cyrillicUi))
     entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), ui("Lotincha matn kirillga o'girib yuboriladi"), "character.cursor.ibeam", 0x007aff, AlfaSettings.sendCyrillic))
     entries.append(.info(4, next(), ui("O'zbek tili tanlangan bo'lsa, ilova kirillda ko'rinadi. Tilni Sozlamalar → Til bo'limidan tanlang.")))
+
+    entries.append(.action(10, next(), .about, ui("AlfaGram haqida"), "info.circle.fill", 0x2563eb))
 
     return entries
 }
@@ -260,6 +263,8 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
             pushImpl?(alfaTypingLogController(context: context))
         case .helpGroup:
             openHelpImpl?()
+        case .about:
+            pushImpl?(alfaAboutController(context: context))
         case .hiddenAccounts:
             AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { success in
                 if success {

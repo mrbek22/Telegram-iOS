@@ -1,0 +1,205 @@
+import Foundation
+import UIKit
+import Display
+import SwiftSignalKit
+import TelegramCore
+import TelegramPresentationData
+import ItemListUI
+import PresentationDataUtils
+import AccountContext
+
+/// AlfaGram: «About AlfaGram» — every feature with its icon and how to turn it on, how it works and how to turn it off.
+/// Keep it current: each new feature gets an entry here in the same build.
+private struct AlfaText {
+    let uz: String
+    let en: String
+    let ru: String
+
+    var value: String {
+        return AlfaCyrillic.ui(AlfaStrings.pick(uz: self.uz, en: self.en, ru: self.ru))
+    }
+}
+
+private struct AlfaAboutFeature {
+    let symbol: String
+    let color: UInt32
+    let title: AlfaText
+    let enable: AlfaText
+    let how: AlfaText
+    let disable: AlfaText?
+}
+
+private func alfaAboutFeatures() -> [AlfaAboutFeature] {
+    return [
+    AlfaAboutFeature(symbol: "eye.slash.fill", color: 0x8e8e93,
+        title: AlfaText(uz: "Ghost rejim", en: "Ghost Mode", ru: "Режим призрака"),
+        enable: AlfaText(uz: "Chatlar ro'yxati tepasidagi ko'z belgisini bosing yoki Sozlamalar → AlfaGram → Ghost rejim bo'limida kerakli bandlarni yoqing.", en: "Tap the eye at the top of the chat list, or turn on the switches in Settings → AlfaGram → Ghost Mode.", ru: "Нажмите на глаз вверху списка чатов или включите переключатели в Настройки → AlfaGram → Режим призрака."),
+        how: AlfaText(uz: "Siz xabarlarni o'qiysiz, lekin suhbatdoshga «o'qildi», «yozyapti...» va «onlayn» belgilari bormaydi.", en: "You read messages, but the other side gets no read receipts, no «typing…» and no «online».", ru: "Вы читаете сообщения, но собеседник не получает отметок о прочтении, «печатает…» и «в сети»."),
+        disable: AlfaText(uz: "Ko'z belgisini qayta bosing yoki o'sha bandlarni o'chiring.", en: "Tap the eye again or turn the same switches off.", ru: "Нажмите на глаз ещё раз или выключите те же переключатели.")),
+    AlfaAboutFeature(symbol: "trash.fill", color: 0xff3b30,
+        title: AlfaText(uz: "O'chirilgan xabarlar", en: "Deleted messages", ru: "Удалённые сообщения"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «O'chirilgan xabarlarni saqlash» (sukut bo'yicha yoqilgan).", en: "Settings → AlfaGram → «Keep deleted messages» (on by default).", ru: "Настройки → AlfaGram → «Сохранять удалённые сообщения» (включено по умолчанию)."),
+        how: AlfaText(uz: "Suhbatdosh xabarni o'chirsa ham, u sizning chatingizda qoladi va vaqti yonida 🗑 belgisi chiqadi.", en: "When the other person deletes a message, it stays in your chat with 🗑 next to the time.", ru: "Если собеседник удалит сообщение, оно останется у вас с 🗑 рядом со временем."),
+        disable: AlfaText(uz: "O'sha bandni o'chiring.", en: "Turn the same switch off.", ru: "Выключите тот же переключатель.")),
+    AlfaAboutFeature(symbol: "clock.arrow.circlepath", color: 0x30b8a8,
+        title: AlfaText(uz: "Tahrir tarixi", en: "Edit history", ru: "История правок"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «Tahrir tarixini saqlash» (sukut bo'yicha yoqilgan).", en: "Settings → AlfaGram → «Keep edit history» (on by default).", ru: "Настройки → AlfaGram → «Сохранять историю правок» (включено по умолчанию)."),
+        how: AlfaText(uz: "Tahrirlangan xabarni bosib turing → «Tahrir tarixi»: barcha oldingi matnlari ko'rinadi.", en: "Press and hold an edited message → «Edit history» to see every earlier version.", ru: "Удерживайте изменённое сообщение → «История правок» — видны все прежние версии."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "play.circle.fill", color: 0x5856d6,
+        title: AlfaText(uz: "Story'larni anonim ko'rish", en: "Anonymous stories", ru: "Анонимные истории"),
+        enable: AlfaText(uz: "Sukut bo'yicha yoqilgan: Sozlamalar → AlfaGram → Ghost rejim → «Story'larni anonim ko'rish».", en: "On by default: Settings → AlfaGram → Ghost Mode → «View stories anonymously».", ru: "Включено по умолчанию: Настройки → AlfaGram → Режим призрака → «Смотреть истории анонимно»."),
+        how: AlfaText(uz: "Story muallifi siz ko'rganingizni bilmaydi — ko'rganlar ro'yxatida chiqmaysiz.", en: "The author doesn't learn you watched — you're not in the viewers list.", ru: "Автор не узнает, что вы смотрели, — вас нет в списке зрителей."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "lock.fill", color: 0x007aff,
+        title: AlfaText(uz: "Chat qulfi", en: "Chat lock", ru: "Блокировка чатов"),
+        enable: AlfaText(uz: "Chatlar ro'yxatida chatni bosib turing → «Chatni qulflash».", en: "In the chat list, press and hold a chat → «Lock chat».", ru: "В списке чатов удерживайте чат → «Заблокировать чат»."),
+        how: AlfaText(uz: "Chat Face ID yoki telefon paroli bilan ochiladi. Ro'yxatda va bildirishnomada xabar matni ko'rinmaydi. Ilovadan chiqsangiz, yana qulflanadi.", en: "The chat opens with Face ID or the phone passcode. Its text is hidden in the list and in notifications. It locks again when you leave the app.", ru: "Чат открывается по Face ID или коду телефона. Текст скрыт в списке и уведомлениях. После выхода из приложения чат снова блокируется."),
+        disable: AlfaText(uz: "Chatni bosib turing → «Qulfni olib tashlash» (Face ID so'raladi).", en: "Press and hold the chat → «Unlock chat» (asks for Face ID).", ru: "Удерживайте чат → «Снять блокировку» (потребуется Face ID).")),
+    AlfaAboutFeature(symbol: "person.crop.circle.badge.xmark", color: 0x007aff,
+        title: AlfaText(uz: "Maxfiy akkauntlar", en: "Hidden accounts", ru: "Скрытые аккаунты"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «Maxfiy akkauntlar» (Face ID bilan) → akkauntni yoqing.", en: "Settings → AlfaGram → «Hidden accounts» (with Face ID) → switch the account on.", ru: "Настройки → AlfaGram → «Скрытые аккаунты» (по Face ID) → включите аккаунт."),
+        how: AlfaText(uz: "Akkaunt «Hisoblar» ro'yxatida va almashtirishda ko'rinmaydi, bildirishnomalari chiqmaydi. Unga faqat shu bo'limdan kirasiz.", en: "The account disappears from the accounts list and the switcher, and its notifications aren't shown. You open it only from that section.", ru: "Аккаунт не виден в списке и переключателе, его уведомления не показываются. Войти в него можно только из этого раздела."),
+        disable: AlfaText(uz: "O'sha bo'limda akkauntni o'chiring.", en: "Switch the account off in the same section.", ru: "Выключите аккаунт в том же разделе.")),
+    AlfaAboutFeature(symbol: "person.2.fill", color: 0x007aff,
+        title: AlfaText(uz: "10 ta akkaunt", en: "10 accounts", ru: "10 аккаунтов"),
+        enable: AlfaText(uz: "Sozlamalar → «Akkaunt qo'shish».", en: "Settings → «Add Account».", ru: "Настройки → «Добавить аккаунт»."),
+        how: AlfaText(uz: "Bitta ilovada 10 tagacha Telegram akkaunti. Ular orasida Sozlamalar tugmasini bosib turib almashasiz.", en: "Up to 10 Telegram accounts in one app. Switch by pressing and holding the Settings tab.", ru: "До 10 аккаунтов Telegram в одном приложении. Переключайтесь, удерживая вкладку «Настройки»."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "cpu", color: 0x5856d6,
+        title: AlfaText(uz: "Bot token bilan kirish", en: "Log in with a bot token", ru: "Вход по токену бота"),
+        enable: AlfaText(uz: "Kirish ekranida (telefon raqami so'raladigan joy) o'ng tepadagi robot tugmasini bosing va @BotFather bergan tokenni kiriting.", en: "On the login screen (where the phone number is asked), tap the robot at the top right and enter the token from @BotFather.", ru: "На экране входа (где спрашивают номер) нажмите робота справа вверху и введите токен от @BotFather."),
+        how: AlfaText(uz: "Ilova bot nomidan ochiladi. Telegram botlarga eski chatlar va tarixni bermaydi — faqat kirgandan keyingi yangi xabarlar keladi.", en: "The app opens as the bot. Telegram gives bots no old chats or history — only new messages after logging in.", ru: "Приложение открывается от имени бота. Telegram не даёт ботам старые чаты и историю — только новые сообщения после входа."),
+        disable: AlfaText(uz: "Bot akkauntidan chiqing: Sozlamalar → Tahrirlash → Chiqish.", en: "Log out of the bot account: Settings → Edit → Log Out.", ru: "Выйдите из аккаунта бота: Настройки → Изменить → Выйти.")),
+    AlfaAboutFeature(symbol: "clock.fill", color: 0x34c759,
+        title: AlfaText(uz: "Kuzatuv", en: "Tracking", ru: "Отслеживание"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → Kuzatuv: onlayn tarixi, profil o'zgarishlari, «Yozdi, yubormadi».", en: "Settings → AlfaGram → Tracking: online history, profile changes, «Typed, didn't send».", ru: "Настройки → AlfaGram → Отслеживание: история онлайна, изменения профиля, «Писал, не отправил»."),
+        how: AlfaText(uz: "Kontaktlar qachon onlayn bo'lgani, username, rasm, raqam yoki ismini o'zgartirgani va sizga yozib yubormagani yozib boriladi. Hammasi faqat telefoningizda.", en: "Records when contacts were online, changed their username, photo, phone or name, and typed to you without sending. All stays on your phone.", ru: "Записывается, когда контакты были в сети, меняли имя пользователя, фото, номер или имя и писали вам, не отправив. Всё хранится только на телефоне."),
+        disable: AlfaText(uz: "O'sha bandlarni o'chiring.", en: "Turn the same switches off.", ru: "Выключите те же переключатели.")),
+    AlfaAboutFeature(symbol: "checkmark.shield.fill", color: 0x007aff,
+        title: AlfaText(uz: "Havola himoyasi", en: "Link protection", ru: "Защита от ссылок"),
+        enable: AlfaText(uz: "Sukut bo'yicha yoqilgan: Sozlamalar → AlfaGram → Xavfsizlik.", en: "On by default: Settings → AlfaGram → Security.", ru: "Включено по умолчанию: Настройки → AlfaGram → Безопасность."),
+        how: AlfaText(uz: "Soxta bank, Click, Payme yoki Telegram saytlari, APK yuklovchi va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiradi.", en: "Warns before opening fake bank, Click, Payme or Telegram sites, APK downloads and «gift» links.", ru: "Предупреждает перед открытием поддельных сайтов банков, Click, Payme, Telegram, загрузок APK и ссылок с «подарками»."),
+        disable: AlfaText(uz: "«Shubhali havolalardan ogohlantirish»ni o'chiring.", en: "Turn «Warn about suspicious links» off.", ru: "Выключите «Предупреждать о подозрительных ссылках».")),
+    AlfaAboutFeature(symbol: "nosign", color: 0xff3b30,
+        title: AlfaText(uz: "Reklamasiz kanallar", en: "No channel ads", ru: "Каналы без рекламы"),
+        enable: AlfaText(uz: "Sukut bo'yicha yoqilgan: Sozlamalar → AlfaGram → «Telegram reklamalarini yashirish».", en: "On by default: Settings → AlfaGram → «Hide Telegram ads».", ru: "Включено по умолчанию: Настройки → AlfaGram → «Скрывать рекламу Telegram»."),
+        how: AlfaText(uz: "Kanallardagi homiylik (reklama) xabarlari yuklanmaydi.", en: "Sponsored messages in channels aren't loaded.", ru: "Спонсорские сообщения в каналах не загружаются."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "square.grid.2x2.fill", color: 0xff9500,
+        title: AlfaText(uz: "Avtomatik tablar", en: "Automatic tabs", ru: "Автоматические вкладки"),
+        enable: AlfaText(uz: "O'zingiz papka yaratmagan bo'lsangiz, o'zi chiqadi.", en: "Shown automatically while you have no folders of your own.", ru: "Появляются сами, пока у вас нет своих папок."),
+        how: AlfaText(uz: "Chatlar shaxsiy, o'zaro kontakt, guruh, kanal va botlarga ajraladi — asosiy ro'yxatda ham, arxivda ham.", en: "Chats are split into personal, mutual contacts, groups, channels and bots — in the main list and in the archive.", ru: "Чаты делятся на личные, взаимные контакты, группы, каналы и ботов — и в основном списке, и в архиве."),
+        disable: AlfaText(uz: "O'zingizning papkangizni yarating — shunda sizning papkalaringiz ko'rinadi.", en: "Create a folder of your own — then your folders are shown.", ru: "Создайте свою папку — тогда будут показаны ваши папки.")),
+    AlfaAboutFeature(symbol: "checkmark.circle.fill", color: 0x34c759,
+        title: AlfaText(uz: "Hammasini belgilash", en: "Select all", ru: "Выбрать все"),
+        enable: AlfaText(uz: "Chatlar yoki kontaktlarda tanlash rejimiga o'ting.", en: "Enter selection mode in chats or contacts.", ru: "Перейдите в режим выбора в чатах или контактах."),
+        how: AlfaText(uz: "Chatlarda tepadagi «Hammasi», kontaktlarda pastdagi «Hammasini belgilash» barchasini bir bosishda tanlaydi. Qayta bossangiz, belgilar olib tashlanadi.", en: "«All» at the top in chats and «Select all» at the bottom in contacts select everything in one tap. Tap again to clear.", ru: "«Все» вверху в чатах и «Выбрать все» внизу в контактах выбирают всё одним нажатием. Повторное нажатие снимает выбор."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "ellipsis.circle.fill", color: 0x8e8e93,
+        title: AlfaText(uz: "⋯ menyu", en: "⋯ menu", ru: "Меню ⋯"),
+        enable: AlfaText(uz: "Chatlar ro'yxati tepasidagi ⋯ tugmasini bosing.", en: "Tap ⋯ at the top of the chat list.", ru: "Нажмите ⋯ вверху списка чатов."),
+        how: AlfaText(uz: "Yangi xabar, hikoya qo'shish, QR skaner, AlfaGram sozlamalari, ko'rinish, keshni tozalash va ro'yxat oxiriga o'tish — hammasi bir joyda.", en: "New message, add story, QR scanner, AlfaGram settings, appearance, clear cache and jump to the end of the list — in one place.", ru: "Новое сообщение, история, QR-сканер, настройки AlfaGram, оформление, очистка кэша и переход в конец списка — в одном месте."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "video.circle.fill", color: 0xff9500,
+        title: AlfaText(uz: "Dumaloq video kamerasi", en: "Round video camera", ru: "Камера видеосообщений"),
+        enable: AlfaText(uz: "Sukut bo'yicha yoqilgan: Sozlamalar → AlfaGram → «Dumaloq videoda kamerani so'rash».", en: "On by default: Settings → AlfaGram → «Ask camera for round videos».", ru: "Включено по умолчанию: Настройки → AlfaGram → «Спрашивать камеру для видеосообщений»."),
+        how: AlfaText(uz: "Dumaloq video tugmasini bosib tursangiz, old yoki orqa kamera so'raladi; tanlagach yozuv qo'lsiz davom etadi.", en: "Holding the round video button asks: front or back camera; then recording continues hands-free.", ru: "При удержании кнопки видеосообщения спрашивается камера; после выбора запись идёт без рук."),
+        disable: AlfaText(uz: "O'sha bandni o'chiring — video old kamerada boshlanadi.", en: "Turn the switch off — videos start with the front camera.", ru: "Выключите переключатель — запись начнётся с фронтальной камеры.")),
+    AlfaAboutFeature(symbol: "bell.slash.fill", color: 0x5856d6,
+        title: AlfaText(uz: "Ovozsiz yuborish", en: "Silent sending", ru: "Тихая отправка"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «Hammasini ovozsiz yuborish».", en: "Settings → AlfaGram → «Send everything silently».", ru: "Настройки → AlfaGram → «Отправлять всё без звука»."),
+        how: AlfaText(uz: "Barcha xabarlaringiz qabul qiluvchida tovushsiz keladi.", en: "All your messages arrive without a sound.", ru: "Все ваши сообщения приходят без звука."),
+        disable: AlfaText(uz: "O'sha bandni o'chiring.", en: "Turn the same switch off.", ru: "Выключите тот же переключатель.")),
+    AlfaAboutFeature(symbol: "qrcode", color: 0x2563eb,
+        title: AlfaText(uz: "Mening AlfaGram havolam", en: "My AlfaGram link", ru: "Моя ссылка AlfaGram"),
+        enable: AlfaText(uz: "Sozlamalar → «Mening AlfaGram havolam».", en: "Settings → «My AlfaGram link».", ru: "Настройки → «Моя ссылка AlfaGram»."),
+        how: AlfaText(uz: "alfagram.uz/username havolangiz QR kartochka bilan: nusxalash, ulashish, kartochka sifatida ulashish va rasmlarga saqlash.", en: "Your alfagram.uz/username link with a QR card: copy, share, share as a card or save to Photos.", ru: "Ваша ссылка alfagram.uz/username с QR-карточкой: копировать, поделиться, отправить карточкой или сохранить в Фото."),
+        disable: nil),
+    AlfaAboutFeature(symbol: "character.book.closed.fill", color: 0x30b8a8,
+        title: AlfaText(uz: "O'zbekcha va kirillcha", en: "Uzbek: Latin and Cyrillic", ru: "Узбекский: латиница и кириллица"),
+        enable: AlfaText(uz: "Sozlamalar → Til → O'zbek tili; kirill uchun Sozlamalar → AlfaGram → Til.", en: "Settings → Language → Uzbek; for Cyrillic, Settings → AlfaGram → Language.", ru: "Настройки → Язык → узбекский; для кириллицы — Настройки → AlfaGram → Язык."),
+        how: AlfaText(uz: "Ilova o'zbekcha, xohlasangiz kirillda. «Lotincha yozsam, kirillda yuborilsin» yoqilsa, matningiz kirillga o'girilib yuboriladi.", en: "The app speaks Uzbek, in Cyrillic if you like. With «Send Latin as Cyrillic» on, your text is converted before sending.", ru: "Приложение на узбекском, по желанию — кириллицей. С «Латиницу отправлять кириллицей» текст конвертируется перед отправкой."),
+        disable: AlfaText(uz: "O'sha bandlarni o'chiring.", en: "Turn the same switches off.", ru: "Выключите те же переключатели.")),
+    AlfaAboutFeature(symbol: "number", color: 0x5e6ad2,
+        title: AlfaText(uz: "ID nusxalash", en: "Copy ID", ru: "Копировать ID"),
+        enable: AlfaText(uz: "Sukut bo'yicha yoqilgan: Sozlamalar → AlfaGram → «Xabar menyusida «ID nusxalash»».", en: "On by default: Settings → AlfaGram → «Copy ID in message menu».", ru: "Включено по умолчанию: Настройки → AlfaGram → «Копировать ID в меню сообщения»."),
+        how: AlfaText(uz: "Xabarni bosib turganda «ID nusxalash» bandi chiqadi; profilda foydalanuvchi ID'si ko'rinadi.", en: "Pressing and holding a message shows «Copy ID»; profiles show the user ID.", ru: "При удержании сообщения появляется «Копировать ID»; в профиле виден ID пользователя."),
+        disable: nil)
+    ]
+}
+
+private enum AlfaAboutEntry: ItemListNodeEntry, Equatable {
+    case header(Int32, Int32, String)
+    case text(Int32, Int32, String)
+    case feature(Int32, Int32, String, String, UInt32)
+
+    var section: ItemListSectionId {
+        switch self {
+        case let .header(section, _, _), let .text(section, _, _), let .feature(section, _, _, _, _):
+            return section
+        }
+    }
+
+    var stableId: Int32 {
+        switch self {
+        case let .header(_, id, _), let .text(_, id, _), let .feature(_, id, _, _, _):
+            return id
+        }
+    }
+
+    static func <(lhs: AlfaAboutEntry, rhs: AlfaAboutEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        switch self {
+        case let .header(_, _, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .text(_, _, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        case let .feature(_, _, title, symbol, color):
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: alfaSettingsIcon(symbol, color), title: title, label: "", sectionId: self.section, style: .blocks, disclosureStyle: .none, action: nil)
+        }
+    }
+}
+
+private func alfaAboutEntries() -> [AlfaAboutEntry] {
+    var entries: [AlfaAboutEntry] = []
+    var id: Int32 = 0
+    func next() -> Int32 {
+        id += 1
+        return id
+    }
+
+    let enableLabel = AlfaText(uz: "YOQISH", en: "ENABLE", ru: "ВКЛЮЧИТЬ").value
+    let howLabel = AlfaText(uz: "QANDAY ISHLAYDI", en: "HOW IT WORKS", ru: "КАК РАБОТАЕТ").value
+    let disableLabel = AlfaText(uz: "O'CHIRISH", en: "DISABLE", ru: "ВЫКЛЮЧИТЬ").value
+
+    entries.append(.header(0, next(), AlfaText(uz: "ALFAGRAM NIMA?", en: "WHAT IS ALFAGRAM", ru: "ЧТО ТАКОЕ ALFAGRAM").value))
+    entries.append(.text(0, next(), AlfaText(uz: "AlfaGram — ustiga qo'shimcha imkoniyatlar qo'shilgan Telegram. Quyidagilarning hammasi bepul, obunasiz. Har birini Sozlamalar → AlfaGram bo'limida yoqib-o'chirasiz.", en: "AlfaGram is Telegram with extra tools built on top. Everything below is free, with no subscription. Each feature is turned on or off in Settings → AlfaGram.", ru: "AlfaGram — это Telegram с дополнительными возможностями. Всё ниже бесплатно и без подписки. Каждая функция включается и выключается в Настройки → AlfaGram.").value))
+
+    var section: Int32 = 1
+    for feature in alfaAboutFeatures() {
+        entries.append(.feature(section, next(), feature.title.value, feature.symbol, feature.color))
+        var text = enableLabel + ": " + feature.enable.value + "\n\n" + howLabel + ": " + feature.how.value
+        if let disable = feature.disable {
+            text += "\n\n" + disableLabel + ": " + disable.value
+        }
+        entries.append(.text(section, next(), text))
+        section += 1
+    }
+    return entries
+}
+
+/// AlfaGram: the «About AlfaGram» screen (Settings → AlfaGram → at the bottom).
+func alfaAboutController(context: AccountContext) -> ViewController {
+    let signal = context.sharedContext.presentationData
+    |> deliverOnMainQueue
+    |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text(AlfaCyrillic.ui("AlfaGram haqida")), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: alfaAboutEntries(), style: .blocks, animateChanges: false)
+        return (controllerState, (listState, 0))
+    }
+    return ItemListController(context: context, state: signal)
+}

@@ -124,6 +124,7 @@ public enum AlfaStrings {
         "Media hali yuklanmagan": ("The media isn't downloaded yet", "Медиа ещё не загружено"),
         "Hammasini belgilash": ("Select all", "Выбрать все"),
         "Yangi xabar": ("New message", "Новое сообщение"),
+        "AlfaGram haqida": ("About AlfaGram", "Об AlfaGram"),
         "Hikoya qo'shish": ("Add story", "Добавить историю"),
         "QR kodni skanerlash": ("Scan QR code", "Сканировать QR-код"),
         "Asboblar": ("Tools", "Инструменты"),
