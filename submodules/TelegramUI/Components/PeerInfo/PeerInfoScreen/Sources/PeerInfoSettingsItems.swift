@@ -364,10 +364,11 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     items[.support]!.append(PeerInfoScreenDisclosureItem(id: 0, text: presentationData.strings.Settings_Support, icon: PresentationResourcesSettings.support, action: {
         interaction.openSettings(.support)
     }))
-    items[.support]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_FAQ, icon: PresentationResourcesSettings.faq, action: {
+    // AlfaGram: the app's name instead of «Telegram» in these two rows.
+    items[.support]!.append(PeerInfoScreenDisclosureItem(id: 1, text: presentationData.strings.Settings_FAQ.replacingOccurrences(of: "Telegram", with: "AlfaGram"), icon: PresentationResourcesSettings.faq, action: {
         interaction.openSettings(.faq)
     }))
-    items[.support]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.Settings_Tips, icon: PresentationResourcesSettings.tips, action: {
+    items[.support]!.append(PeerInfoScreenDisclosureItem(id: 2, text: presentationData.strings.Settings_Tips.replacingOccurrences(of: "Telegram", with: "AlfaGram"), icon: PresentationResourcesSettings.tips, action: {
         interaction.openSettings(.tips)
     }))
     

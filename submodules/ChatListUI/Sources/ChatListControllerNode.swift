@@ -30,6 +30,7 @@ import ChatListHeaderNoticeComponent
 import ChatListFilterTabContainerNode
 import GlassControls
 import SideColumnLayout
+import AppBundle
 
 public enum ChatListContainerNodeFilter: Equatable {
     case all
@@ -1618,7 +1619,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                             isMainTab = true
                         case let .filter(idValue, text, unread):
                             id = AnyHashable(idValue)
-                            alfaSymbolName = AlfaLocalTabs.symbolName(idValue)
+                            alfaSymbolName = AlfaLocalTabs.iconName(idValue)
                             title = HorizontalTabsComponent.Tab.Title(text: text.text, entities: text.entities, enableAnimations: text.enableAnimations)
                             if unread.value != 0 {
                                 badge = HorizontalTabsComponent.Tab.Badge(
@@ -1630,8 +1631,8 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                         }
                         
                         let tabContent: HorizontalTabsComponent.Tab.Content
-                        if let alfaSymbolName, let alfaIcon = UIImage(systemName: alfaSymbolName, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate) {
-                            tabContent = .custom(AnyComponent(Image(image: alfaIcon, tintColor: self.presentationData.theme.chat.inputPanel.panelControlColor, size: CGSize(width: 24.0, height: 22.0), contentMode: .center)))
+                        if let alfaSymbolName, let alfaIcon = UIImage(bundleImageName: alfaSymbolName)?.withRenderingMode(.alwaysTemplate) {
+                            tabContent = .custom(AnyComponent(Image(image: alfaIcon, tintColor: self.presentationData.theme.chat.inputPanel.panelControlColor, size: CGSize(width: 28.0, height: 28.0), contentMode: .scaleAspectFit)))
                         } else {
                             tabContent = .title(title)
                         }

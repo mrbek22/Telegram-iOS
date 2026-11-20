@@ -202,7 +202,8 @@ extension PeerInfoScreenNode {
         case .faq:
             self.openFaq()
         case .tips:
-            self.openTips()
+            // AlfaGram: «AlfaGram features» opens the AlfaGram feature guide.
+            push(alfaAboutController(context: self.context))
         case .phoneNumber:
             guard let controller = self.controller, !controller.presentAccountFrozenInfoIfNeeded() else {
                 return

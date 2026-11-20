@@ -94,7 +94,7 @@ private func alfaAboutFeatures() -> [AlfaAboutFeature] {
     AlfaAboutFeature(symbol: "square.grid.2x2.fill", color: 0xff9500,
         title: AlfaText(uz: "Avtomatik tablar", en: "Automatic tabs", ru: "Автоматические вкладки"),
         enable: AlfaText(uz: "O'zingiz papka yaratmagan bo'lsangiz, o'zi chiqadi.", en: "Shown automatically while you have no folders of your own.", ru: "Появляются сами, пока у вас нет своих папок."),
-        how: AlfaText(uz: "Chatlar shaxsiy, o'zaro kontakt, guruh, kanal va botlarga ajraladi — asosiy ro'yxatda ham, arxivda ham.", en: "Chats are split into personal, mutual contacts, groups, channels and bots — in the main list and in the archive.", ru: "Чаты делятся на личные, взаимные контакты, группы, каналы и ботов — и в основном списке, и в архиве."),
+        how: AlfaText(uz: "«Barchasi» yonida to'rt tab: odamlar, guruhlar, kanallar va botlar — asosiy ro'yxatda ham, arxivda ham.", en: "Next to «All» there are four tabs: people, groups, channels and bots — in the main list and in the archive.", ru: "Рядом с «Все» четыре вкладки: люди, группы, каналы и боты — и в основном списке, и в архиве."),
         disable: AlfaText(uz: "O'zingizning papkangizni yarating — shunda sizning papkalaringiz ko'rinadi.", en: "Create a folder of your own — then your folders are shown.", ru: "Создайте свою папку — тогда будут показаны ваши папки.")),
     AlfaAboutFeature(symbol: "person.3.fill", color: 0x007aff,
         title: AlfaText(uz: "Kontaktlardan guruh va kanal", en: "Groups and channels from Contacts", ru: "Группы и каналы из контактов"),
@@ -223,7 +223,7 @@ private func alfaAboutEntries() -> [AlfaAboutEntry] {
 }
 
 /// AlfaGram: the «About AlfaGram» screen (Settings → AlfaGram → at the bottom).
-func alfaAboutController(context: AccountContext) -> ViewController {
+public func alfaAboutController(context: AccountContext) -> ViewController {
     let signal = context.sharedContext.presentationData
     |> deliverOnMainQueue
     |> map { presentationData -> (ItemListControllerState, (ItemListNodeState, Any)) in

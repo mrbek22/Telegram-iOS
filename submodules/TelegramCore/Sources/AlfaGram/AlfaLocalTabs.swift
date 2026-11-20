@@ -26,14 +26,29 @@ public enum AlfaLocalTabs {
         switch id {
         case personalId:
             return "person.fill"
-        case mutualId:
-            return "person.2.fill"
         case groupsId:
-            return "bubble.left.and.bubble.right.fill"
+            return "person.2.fill"
         case channelsId:
             return "megaphone.fill"
         case botsId:
             return "cpu"
+        default:
+            return nil
+        }
+    }
+
+    /// Telegram's own folder icon (TelegramUI asset) a local tab shows in the chat list — the same icons as
+    /// Telegram's folder types: a person, two people (groups), a megaphone (channels), a robot (bots).
+    public static func iconName(_ id: Int32) -> String? {
+        switch id {
+        case personalId:
+            return "Chat List/Filters/Contact"
+        case groupsId:
+            return "Chat List/Filters/Group"
+        case channelsId:
+            return "Chat List/Filters/Channel"
+        case botsId:
+            return "Chat List/Filters/Bot"
         default:
             return nil
         }
@@ -72,11 +87,10 @@ public enum AlfaLocalTabs {
         )
     }
 
-    static func tabs(mutualContactIds: [PeerId]) -> [ChatListFilter] {
+    /// People / Groups / Channels / Bots (the mutual-contacts tab was dropped, user 2026-11-21).
+    static func tabs() -> [ChatListFilter] {
         var result: [ChatListFilter] = []
         result.append(tab(id: personalId, icon: "👤", categories: [.contacts, .nonContacts]))
-        // Always shown (an empty list just shows no chats yet), so the tab never disappears.
-        result.append(tab(id: mutualId, icon: "🤝", categories: [], includePeers: mutualContactIds))
         result.append(tab(id: groupsId, icon: "👥", categories: [.groups]))
         result.append(tab(id: channelsId, icon: "📢", categories: [.channels]))
         result.append(tab(id: botsId, icon: "🤖", categories: [.bots]))
@@ -84,41 +98,20 @@ public enum AlfaLocalTabs {
     }
 }
 
-private func alfaMutualContactIds(postbox: Postbox) -> Signal<[PeerId], NoError> {
-    let key: PostboxViewKey = .contacts(accountPeerId: nil, includePresences: false)
-    return postbox.combinedView(keys: [key])
-    |> map { views -> [PeerId] in
-        guard let view = views.views[key] as? ContactPeersView else {
-            return []
-        }
-        var result: [PeerId] = []
-        for peer in view.peers {
-            if let user = peer as? TelegramUser, user.flags.contains(.mutualContact), user.botInfo == nil {
-                result.append(user.id)
-            }
-        }
-        result.sort(by: { $0.toInt64() < $1.toInt64() })
-        return result
-    }
-    |> distinctUntilChanged
-}
-
 /// Adds the local tabs to the account's chat list filters while the account has no folders of its own.
 func alfaWithLocalChatListTabs(postbox: Postbox, _ filters: Signal<[ChatListFilter], NoError>) -> Signal<[ChatListFilter], NoError> {
+    let _ = postbox
     return filters
-    |> mapToSignal { filters -> Signal<[ChatListFilter], NoError> in
+    |> map { filters -> [ChatListFilter] in
         if AlfaLocalTabs.hasOwnFolders(filters) {
-            return .single(filters)
+            return filters
         }
-        return alfaMutualContactIds(postbox: postbox)
-        |> map { mutualIds -> [ChatListFilter] in
-            var result = filters
-            if !result.contains(where: { if case .allChats = $0 { return true } else { return false } }) {
-                result.insert(.allChats, at: 0)
-            }
-            result.append(contentsOf: AlfaLocalTabs.tabs(mutualContactIds: mutualIds))
-            return result
+        var result = filters
+        if !result.contains(where: { if case .allChats = $0 { return true } else { return false } }) {
+            result.insert(.allChats, at: 0)
         }
+        result.append(contentsOf: AlfaLocalTabs.tabs())
+        return result
     }
     |> distinctUntilChanged
 }
