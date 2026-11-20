@@ -7298,10 +7298,10 @@ private final class ChatListLocationContext {
     
     private func alfaMakeGhostButton(presentationData: PresentationData) -> NavigationBarComponent.Button {
         let isOn = AlfaSettings.ghostMode
-        let image = UIImage(systemName: isOn ? "eye.slash.fill" : "eye", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate)
-        let color = isOn ? presentationData.theme.rootController.navigationBar.accentTextColor : presentationData.theme.rootController.navigationBar.primaryTextColor
+        let image = UIImage(systemName: isOn ? "eye.slash.fill" : "eye", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate) ?? UIImage()
         return NavigationBarComponent.Button(id: "alfaGhost",
-            content: .custom(AnyComponent(Image(image: image, tintColor: color, size: CGSize(width: 26.0, height: 24.0), contentMode: .center))),
+            content: .image(image),
+            tint: isOn ? .accent : .generic,
             action: { [weak self] _ in
                 guard let self else {
                     return
