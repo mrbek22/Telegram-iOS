@@ -7440,11 +7440,8 @@ private final class ChatListLocationContext {
                     }
                 }
                 
-                if isRoot {
-                    self.alfaGhostButton = self.alfaMakeGhostButton(presentationData: presentationData)
-                } else {
-                    self.alfaGhostButton = nil
-                }
+                // AlfaGram: Ghost mode switch (this branch is the root chat list only).
+                self.alfaGhostButton = self.alfaMakeGhostButton(presentationData: presentationData)
 
                 if storyPostingAvailable {
                     self.storyButton = NavigationBarComponent.Button(id: "story",
