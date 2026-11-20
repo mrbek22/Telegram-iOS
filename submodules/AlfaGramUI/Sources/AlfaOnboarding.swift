@@ -7,31 +7,34 @@ private func alfaColor(_ rgb: UInt32) -> UIColor {
     return UIColor(red: CGFloat((rgb >> 16) & 0xff) / 255.0, green: CGFloat((rgb >> 8) & 0xff) / 255.0, blue: CGFloat(rgb & 0xff) / 255.0, alpha: 1.0)
 }
 
-/// AlfaGram: three slides shown once — Ghost mode, nothing is lost, link protection. Each with a moving emoji.
+/// AlfaGram: "what AlfaGram can do" — shown once over the chat list: a list of features, each with an icon tile,
+/// in the app's language (Uzbek Latin / Cyrillic, English, Russian).
 public final class AlfaOnboardingController: UIViewController {
-    private static let shownKey = "onboardingV1"
+    private static let shownKey = "onboardingV2"
 
-    private struct Slide {
-        let emoji: String
+    private struct Feature {
+        let symbol: String
         let title: String
         let text: String
     }
 
-    private let slides: [Slide] = [
-        Slide(emoji: "👻", title: "Ghost rejim", text: "Onlayn ko'rinmasdan o'qing: «yozyapti» va «o'qildi» belgilari yuborilmaydi, story'larni anonim ko'ring. Sozlamalar → AlfaGram."),
-        Slide(emoji: "🗑", title: "Hech narsa yo'qolmaydi", text: "Suhbatdoshingiz xabarni o'chirsa ham, u sizda 🗑 belgisi bilan qoladi. Tahrirlangan xabarning eski matnini ko'rish uchun xabarni bosib turing."),
-        Slide(emoji: "🛡", title: "Havola himoyasi", text: "Soxta bank, Click, Payme yoki Telegram saytlari va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiramiz. Hammasi faqat telefoningizda ishlaydi.")
+    private let features: [Feature] = [
+        Feature(symbol: "eye.slash.fill", title: "Ghost rejim", text: "Onlayn ko'rinmasdan o'qing: «yozyapti» va «o'qildi» yuborilmaydi. Chatlar ro'yxati tepasidagi ko'z belgisi bilan bir bosishda yoqing."),
+        Feature(symbol: "trash.fill", title: "O'chirilgan xabarlar qoladi", text: "Suhbatdoshingiz xabarni o'chirsa ham, u sizda 🗑 belgisi bilan saqlanib qoladi."),
+        Feature(symbol: "clock.arrow.circlepath", title: "Tahrir tarixi", text: "Tahrirlangan xabarni bosib turing → «Tahrir tarixi» — barcha oldingi matnlarni ko'rasiz."),
+        Feature(symbol: "lock.fill", title: "Chat qulfi", text: "Chatni bosib turing → «Chatni qulflash». U Face ID yoki parol bilan ochiladi, xabarlari ro'yxatda va bildirishnomada ko'rinmaydi."),
+        Feature(symbol: "play.circle.fill", title: "Story'larni anonim ko'rish", text: "Story'larni muallifga bildirmasdan ko'ring — bu sukut bo'yicha yoqilgan."),
+        Feature(symbol: "person.2.fill", title: "10 ta akkaunt", text: "10 tagacha akkauntni bitta ilovada ishlating. Keraklisini «Maxfiy akkauntlar»da yashirib qo'ying."),
+        Feature(symbol: "video.circle.fill", title: "Dumaloq video kamerasi", text: "Dumaloq video tugmasini bosib turing — old yoki orqa kamerani tanlaysiz, yozuv qo'lsiz davom etadi."),
+        Feature(symbol: "checkmark.shield.fill", title: "Havola himoyasi", text: "Soxta bank, Click, Payme yoki Telegram saytlari va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiramiz."),
+        Feature(symbol: "character.bubble.fill", title: "O'zbekcha va kirillcha", text: "Ilova o'zbek tilida, xohlasangiz kirillda. Lotincha yozganingizni kirillda yuborish ham mumkin."),
+        Feature(symbol: "gearshape.fill", title: "Hammasi bir joyda", text: "Barcha imkoniyatlarni Sozlamalar → AlfaGram bo'limida yoqib-o'chirasiz.")
     ]
 
-    private var page = 0
-    private let emojiLabel = UILabel()
-    private let titleLabel = UILabel()
-    private let textLabel = UILabel()
-    private let pageControl = UIPageControl()
+    private let scrollView = UIScrollView()
     private let button = UIButton(type: .system)
-    private let content = UIView()
 
-    /// Shown once per install, over the main screen.
+    /// Shown once per install, over the main screen (the chat list).
     public static func presentIfNeeded(window: UIWindow?) {
         if AlfaSettings.flag(shownKey) {
             return
@@ -46,8 +49,9 @@ public final class AlfaOnboardingController: UIViewController {
         AlfaSettings.setFlag(shownKey, true)
         let controller = AlfaOnboardingController()
         if #available(iOS 15.0, *), let sheet = controller.sheetPresentationController {
-            sheet.detents = [.medium()]
+            sheet.detents = [.large()]
             sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 28.0
         }
         top.present(controller, animated: true, completion: nil)
     }
@@ -56,140 +60,126 @@ public final class AlfaOnboardingController: UIViewController {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.systemBackground
 
-        self.content.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(self.content)
+        let accent = alfaColor(0x2563eb)
 
-        self.emojiLabel.font = UIFont.systemFont(ofSize: 76.0)
-        self.emojiLabel.textAlignment = .center
-        self.titleLabel.font = UIFont.boldSystemFont(ofSize: 22.0)
-        self.titleLabel.textAlignment = .center
-        self.titleLabel.textColor = UIColor.label
-        self.textLabel.font = UIFont.systemFont(ofSize: 15.0)
-        self.textLabel.textAlignment = .center
-        self.textLabel.textColor = UIColor.secondaryLabel
-        self.textLabel.numberOfLines = 0
+        self.scrollView.alwaysBounceVertical = true
+        self.scrollView.showsVerticalScrollIndicator = false
+        self.scrollView.translatesAutoresizingMaskIntoConstraints = false
+        self.view.addSubview(self.scrollView)
 
-        let stack = UIStackView(arrangedSubviews: [self.emojiLabel, self.titleLabel, self.textLabel])
-        stack.axis = .vertical
-        stack.alignment = .fill
-        stack.spacing = 10.0
-        stack.setCustomSpacing(14.0, after: self.emojiLabel)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        self.content.addSubview(stack)
+        let titleLabel = UILabel()
+        titleLabel.text = AlfaCyrillic.ui("AlfaGram imkoniyatlari")
+        titleLabel.font = UIFont.systemFont(ofSize: 28.0, weight: .bold)
+        titleLabel.textColor = UIColor.label
+        titleLabel.numberOfLines = 0
 
-        self.pageControl.numberOfPages = self.slides.count
-        self.pageControl.currentPageIndicatorTintColor = alfaColor(0x2563eb)
-        self.pageControl.pageIndicatorTintColor = UIColor.tertiaryLabel
-        self.pageControl.isUserInteractionEnabled = false
-        self.pageControl.translatesAutoresizingMaskIntoConstraints = false
-        self.view.addSubview(self.pageControl)
+        let list = UIStackView()
+        list.axis = .vertical
+        list.alignment = .fill
+        list.spacing = 0.0
+        list.translatesAutoresizingMaskIntoConstraints = false
+        self.scrollView.addSubview(list)
 
-        self.button.backgroundColor = alfaColor(0x2563eb)
+        list.addArrangedSubview(titleLabel)
+        list.setCustomSpacing(18.0, after: titleLabel)
+
+        for (index, feature) in self.features.enumerated() {
+            list.addArrangedSubview(self.makeRow(feature, accent: accent, separator: index != self.features.count - 1))
+        }
+
+        self.button.backgroundColor = accent
         self.button.setTitleColor(UIColor.white, for: .normal)
-        self.button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 17.0)
-        self.button.layer.cornerRadius = 14.0
+        self.button.setTitle(AlfaCyrillic.ui("Tushunarli!"), for: .normal)
+        self.button.titleLabel?.font = UIFont.systemFont(ofSize: 18.0, weight: .semibold)
+        self.button.layer.cornerRadius = 25.0
         self.button.translatesAutoresizingMaskIntoConstraints = false
         self.button.addTarget(self, action: #selector(self.buttonPressed), for: .touchUpInside)
         self.view.addSubview(self.button)
 
         NSLayoutConstraint.activate([
-            self.content.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor, constant: 24.0),
-            self.content.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 24.0),
-            self.content.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -24.0),
-            stack.topAnchor.constraint(equalTo: self.content.topAnchor),
-            stack.leadingAnchor.constraint(equalTo: self.content.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: self.content.trailingAnchor),
-            stack.bottomAnchor.constraint(equalTo: self.content.bottomAnchor),
+            self.scrollView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            self.scrollView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+            self.scrollView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
+            self.scrollView.bottomAnchor.constraint(equalTo: self.button.topAnchor, constant: -10.0),
+
+            list.topAnchor.constraint(equalTo: self.scrollView.contentLayoutGuide.topAnchor, constant: 36.0),
+            list.bottomAnchor.constraint(equalTo: self.scrollView.contentLayoutGuide.bottomAnchor, constant: -16.0),
+            list.leadingAnchor.constraint(equalTo: self.scrollView.frameLayoutGuide.leadingAnchor, constant: 24.0),
+            list.trailingAnchor.constraint(equalTo: self.scrollView.frameLayoutGuide.trailingAnchor, constant: -24.0),
+
             self.button.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 20.0),
             self.button.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -20.0),
-            self.button.heightAnchor.constraint(equalToConstant: 50.0),
-            self.button.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -16.0),
-            self.pageControl.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            self.pageControl.bottomAnchor.constraint(equalTo: self.button.topAnchor, constant: -12.0)
+            self.button.heightAnchor.constraint(equalToConstant: 52.0),
+            self.button.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -12.0)
         ])
-
-        let left = UISwipeGestureRecognizer(target: self, action: #selector(self.swipedLeft))
-        left.direction = .left
-        self.view.addGestureRecognizer(left)
-        let right = UISwipeGestureRecognizer(target: self, action: #selector(self.swipedRight))
-        right.direction = .right
-        self.view.addGestureRecognizer(right)
-
-        self.apply(animatedDirection: 0)
     }
 
-    override public func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        self.startWiggle()
-    }
+    /// One feature: a blue rounded tile with a white icon, the title and the explanation, a hairline below.
+    private func makeRow(_ feature: Feature, accent: UIColor, separator: Bool) -> UIView {
+        let row = UIView()
 
-    /// The emoji keeps moving: a small swing and bounce, repeated.
-    private func startWiggle() {
-        let layer = self.emojiLabel.layer
-        layer.removeAnimation(forKey: "wiggle")
-        let rotation = CAKeyframeAnimation(keyPath: "transform.rotation.z")
-        rotation.values = [0.0, -0.16, 0.16, -0.10, 0.08, 0.0, 0.0]
-        rotation.keyTimes = [0.0, 0.12, 0.28, 0.42, 0.54, 0.64, 1.0]
-        let scale = CAKeyframeAnimation(keyPath: "transform.scale")
-        scale.values = [1.0, 1.12, 0.96, 1.04, 1.0, 1.0]
-        scale.keyTimes = [0.0, 0.14, 0.3, 0.46, 0.64, 1.0]
-        let group = CAAnimationGroup()
-        group.animations = [rotation, scale]
-        group.duration = 1.8
-        group.repeatCount = .infinity
-        layer.add(group, forKey: "wiggle")
-    }
+        let tile = UIView()
+        tile.backgroundColor = accent
+        tile.layer.cornerRadius = 14.0
+        tile.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(tile)
 
-    private func apply(animatedDirection: Int) {
-        let slide = self.slides[self.page]
-        let update = {
-            self.emojiLabel.text = slide.emoji
-            self.titleLabel.text = AlfaCyrillic.ui(slide.title)
-            self.textLabel.text = AlfaCyrillic.ui(slide.text)
-            self.pageControl.currentPage = self.page
-            self.button.setTitle(AlfaCyrillic.ui(self.page == self.slides.count - 1 ? "Boshlash" : "Keyingi"), for: .normal)
+        let icon = UIImageView(image: UIImage(systemName: feature.symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 24.0, weight: .semibold)))
+        icon.tintColor = UIColor.white
+        icon.contentMode = .center
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        tile.addSubview(icon)
+
+        let titleLabel = UILabel()
+        titleLabel.text = AlfaCyrillic.ui(feature.title)
+        titleLabel.font = UIFont.systemFont(ofSize: 18.0, weight: .semibold)
+        titleLabel.textColor = UIColor.label
+        titleLabel.numberOfLines = 0
+
+        let textLabel = UILabel()
+        textLabel.text = AlfaCyrillic.ui(feature.text)
+        textLabel.font = UIFont.systemFont(ofSize: 15.0)
+        textLabel.textColor = UIColor.secondaryLabel
+        textLabel.numberOfLines = 0
+
+        let texts = UIStackView(arrangedSubviews: [titleLabel, textLabel])
+        texts.axis = .vertical
+        texts.spacing = 4.0
+        texts.translatesAutoresizingMaskIntoConstraints = false
+        row.addSubview(texts)
+
+        var constraints: [NSLayoutConstraint] = [
+            tile.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            tile.widthAnchor.constraint(equalToConstant: 56.0),
+            tile.heightAnchor.constraint(equalToConstant: 56.0),
+            tile.centerYAnchor.constraint(equalTo: row.centerYAnchor),
+            tile.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 14.0),
+            icon.centerXAnchor.constraint(equalTo: tile.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: tile.centerYAnchor),
+            texts.leadingAnchor.constraint(equalTo: tile.trailingAnchor, constant: 16.0),
+            texts.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            texts.topAnchor.constraint(equalTo: row.topAnchor, constant: 16.0),
+            texts.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -16.0)
+        ]
+
+        if separator {
+            let line = UIView()
+            line.backgroundColor = UIColor.separator
+            line.translatesAutoresizingMaskIntoConstraints = false
+            row.addSubview(line)
+            constraints.append(contentsOf: [
+                line.leadingAnchor.constraint(equalTo: texts.leadingAnchor),
+                line.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                line.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+                line.heightAnchor.constraint(equalToConstant: 0.5)
+            ])
         }
-        if animatedDirection == 0 {
-            update()
-            return
-        }
-        let offset: CGFloat = animatedDirection > 0 ? -40.0 : 40.0
-        UIView.animate(withDuration: 0.14, animations: {
-            self.content.alpha = 0.0
-            self.content.transform = CGAffineTransform(translationX: offset, y: 0.0)
-        }, completion: { _ in
-            update()
-            self.content.transform = CGAffineTransform(translationX: -offset, y: 0.0)
-            UIView.animate(withDuration: 0.22, animations: {
-                self.content.alpha = 1.0
-                self.content.transform = .identity
-            }, completion: { _ in
-                self.startWiggle()
-            })
-        })
+        NSLayoutConstraint.activate(constraints)
+        return row
     }
 
     @objc private func buttonPressed() {
-        if self.page >= self.slides.count - 1 {
-            self.dismiss(animated: true, completion: nil)
-            return
-        }
-        self.page += 1
-        self.apply(animatedDirection: 1)
-    }
-
-    @objc private func swipedLeft() {
-        if self.page < self.slides.count - 1 {
-            self.page += 1
-            self.apply(animatedDirection: 1)
-        }
-    }
-
-    @objc private func swipedRight() {
-        if self.page > 0 {
-            self.page -= 1
-            self.apply(animatedDirection: -1)
-        }
+        self.dismiss(animated: true, completion: nil)
     }
 }
 
