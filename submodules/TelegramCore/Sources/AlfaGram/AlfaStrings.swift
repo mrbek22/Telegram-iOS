@@ -124,6 +124,28 @@ public enum AlfaStrings {
         "Media hali yuklanmagan": ("The media isn't downloaded yet", "Медиа ещё не загружено"),
         "Hammasini belgilash": ("Select all", "Выбрать все"),
 
+        // AlfaGram settings: one-line explanations under the switches
+        "Suhbatdosh o'chirgan xabar sizda 🗑 belgisi bilan qoladi": ("A message the other person deletes stays with you, marked 🗑", "Удалённое собеседником сообщение останется у вас с отметкой 🗑"),
+        "Tahrirlangan xabarni bosib turing → «Tahrir tarixi»": ("Press and hold an edited message → «Edit history»", "Удерживайте изменённое сообщение → «История правок»"),
+        "Xabarni bosib turganda ID'ni nusxalash bandi": ("A «Copy ID» item when you press and hold a message", "Пункт «Копировать ID» при удержании сообщения"),
+        "Hech kim sizni onlayn holatda ko'rmaydi": ("No one sees you online", "Никто не видит вас в сети"),
+        "Suhbatdosh siz yozayotganingizni ko'rmaydi": ("Others don't see that you're typing", "Собеседник не видит, что вы печатаете"),
+        "Xabarni o'qiganingiz yuboruvchiga bildirilmaydi": ("The sender isn't told you read the message", "Отправитель не узнает, что вы прочитали"),
+        "Story muallifi siz ko'rganingizni bilmaydi": ("The author won't know you watched the story", "Автор не узнает, что вы смотрели историю"),
+        "Chatlar ro'yxati tepasidagi ko'z belgisi uchala Ghost sozlamasini bir bosishda yoqadi.": ("The eye at the top of the chat list turns all three Ghost settings on with one tap.", "Глаз вверху списка чатов включает все три настройки призрака одним нажатием."),
+        "Kim qachon onlayn bo'lgani yozib boriladi": ("Records who was online and when", "Записывается, кто и когда был в сети"),
+        "Username, rasm, raqam yoki ism o'zgarishi": ("Username, photo, phone or name changes", "Смена имени пользователя, фото, номера или имени"),
+        "Sizga yozib, yubormaganlar": ("Who typed to you but didn't send", "Кто начал писать вам, но не отправил"),
+        "Hammasi faqat telefoningizda saqlanadi.": ("Everything is stored only on your phone.", "Всё хранится только на вашем телефоне."),
+        "Soxta bank, Click, Payme, Telegram saytlari va APK havolalari": ("Fake bank, Click, Payme, Telegram sites and APK links", "Поддельные сайты банков, Click, Payme, Telegram и ссылки на APK"),
+        "Kanallardagi homiylik xabarlari ko'rinmaydi": ("Sponsored messages in channels are hidden", "Спонсорские сообщения в каналах скрыты"),
+        "Chatlar ro'yxati tepasidagi story qatori": ("The stories row above the chat list", "Ряд историй над списком чатов"),
+        "Xabarlaringiz qabul qiluvchida tovushsiz keladi": ("Your messages arrive without a sound", "Ваши сообщения приходят без звука"),
+        "Bosib turganda old yoki orqa kamera so'raladi": ("Holding the button asks: front or back camera", "При удержании спрашивается: фронтальная или основная камера"),
+        "Rasm, video va matnni saqlash, skrinshot olish": ("Save photos, videos and text, take screenshots", "Сохранение фото, видео и текста, скриншоты"),
+        "O'zbek tili tanlanganda ilova kirillda": ("With Uzbek selected, the app is in Cyrillic", "При выбранном узбекском — интерфейс на кириллице"),
+        "Lotincha matn kirillga o'girib yuboriladi": ("Latin text is sent converted to Cyrillic", "Текст латиницей отправляется кириллицей"),
+
         // What AlfaGram can do (first-launch list)
         "AlfaGram imkoniyatlari": ("What AlfaGram can do", "Возможности AlfaGram"),
         "Tushunarli!": ("Got it!", "Понятно!"),

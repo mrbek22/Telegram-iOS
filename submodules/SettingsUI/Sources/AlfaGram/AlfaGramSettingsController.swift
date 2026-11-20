@@ -29,22 +29,38 @@ private final class AlfaGramSettingsControllerArguments {
     }
 }
 
+/// AlfaGram: a settings icon — a white SF Symbol on a colored rounded tile (like the system Settings).
+private func alfaSettingsIcon(_ symbol: String, _ color: UInt32) -> UIImage? {
+    let size = CGSize(width: 29.0, height: 29.0)
+    let renderer = UIGraphicsImageRenderer(size: size)
+    return renderer.image { _ in
+        UIColor(rgb: color).setFill()
+        UIBezierPath(roundedRect: CGRect(origin: CGPoint(), size: size), cornerRadius: 7.0).fill()
+        if let glyph = UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 14.0, weight: .semibold))?.withTintColor(UIColor.white, renderingMode: .alwaysOriginal) {
+            let glyphSize = glyph.size
+            glyph.draw(in: CGRect(origin: CGPoint(x: (size.width - glyphSize.width) / 2.0, y: (size.height - glyphSize.height) / 2.0), size: glyphSize))
+        }
+    }
+}
+
 private enum AlfaGramSettingsEntry: ItemListNodeEntry, Equatable {
     case header(Int32, Int32, String)
-    case toggle(Int32, Int32, AlfaSettings.Key, String, Bool)
-    case action(Int32, Int32, AlfaGramSettingsAction, String)
+    /// section, id, key, title, explanation, icon symbol, icon color, value
+    case toggle(Int32, Int32, AlfaSettings.Key, String, String, String, UInt32, Bool)
+    /// section, id, action, title, icon symbol, icon color
+    case action(Int32, Int32, AlfaGramSettingsAction, String, String, UInt32)
     case info(Int32, Int32, String)
 
     var section: ItemListSectionId {
         switch self {
-        case let .header(section, _, _), let .toggle(section, _, _, _, _), let .action(section, _, _, _), let .info(section, _, _):
+        case let .header(section, _, _), let .toggle(section, _, _, _, _, _, _, _), let .action(section, _, _, _, _, _), let .info(section, _, _):
             return section
         }
     }
 
     var stableId: Int32 {
         switch self {
-        case let .header(_, id, _), let .toggle(_, id, _, _, _), let .action(_, id, _, _), let .info(_, id, _):
+        case let .header(_, id, _), let .toggle(_, id, _, _, _, _, _, _), let .action(_, id, _, _, _, _), let .info(_, id, _):
             return id
         }
     }
@@ -58,12 +74,12 @@ private enum AlfaGramSettingsEntry: ItemListNodeEntry, Equatable {
         switch self {
         case let .header(_, _, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
-        case let .toggle(_, _, key, title, value):
-            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+        case let .toggle(_, _, key, title, text, symbol, color, value):
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, icon: alfaSettingsIcon(symbol, color), title: title, text: text, value: value, maximumNumberOfLines: 2, sectionId: self.section, style: .blocks, updated: { value in
                 arguments.toggle(key, value)
             })
-        case let .action(_, _, action, title):
-            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, label: "", sectionId: self.section, style: .blocks, action: {
+        case let .action(_, _, action, title, symbol, color):
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: alfaSettingsIcon(symbol, color), title: title, label: "", sectionId: self.section, style: .blocks, action: {
                 arguments.open(action)
             })
         case let .info(_, _, text):
@@ -82,49 +98,46 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     }
 
     entries.append(.header(0, next(), ui("XABARLAR")))
-    entries.append(.toggle(0, next(), .saveDeletedMessages, ui("O'chirilgan xabarlarni saqlash"), AlfaSettings.saveDeletedMessages))
-    entries.append(.toggle(0, next(), .saveEditHistory, ui("Tahrir tarixini saqlash"), AlfaSettings.saveEditHistory))
-    entries.append(.toggle(0, next(), .showMessageId, ui("Xabar menyusida «ID nusxalash»"), AlfaSettings.showMessageId))
-    entries.append(.info(0, next(), ui("Suhbatdosh o'chirgan xabar chatda qoladi va vaqti yonida 🗑 belgisi chiqadi. Tahrirlangan xabarni bosib turing → «Tahrir tarixi» — oldingi matnlar.")))
+    entries.append(.toggle(0, next(), .saveDeletedMessages, ui("O'chirilgan xabarlarni saqlash"), ui("Suhbatdosh o'chirgan xabar sizda 🗑 belgisi bilan qoladi"), "trash.fill", 0xff3b30, AlfaSettings.saveDeletedMessages))
+    entries.append(.toggle(0, next(), .saveEditHistory, ui("Tahrir tarixini saqlash"), ui("Tahrirlangan xabarni bosib turing → «Tahrir tarixi»"), "clock.arrow.circlepath", 0x30b8a8, AlfaSettings.saveEditHistory))
+    entries.append(.toggle(0, next(), .showMessageId, ui("Xabar menyusida «ID nusxalash»"), ui("Xabarni bosib turganda ID'ni nusxalash bandi"), "number", 0x5e6ad2, AlfaSettings.showMessageId))
 
     entries.append(.header(1, next(), ui("GHOST REJIM")))
-    entries.append(.toggle(1, next(), .ghostOnline, ui("Onlayn ko'rinmaslik"), AlfaSettings.ghostOnline))
-    entries.append(.toggle(1, next(), .ghostTyping, ui("«Yozyapti...» ni yubormaslik"), AlfaSettings.ghostTyping))
-    entries.append(.toggle(1, next(), .ghostRead, ui("O'qilganini bildirmaslik"), AlfaSettings.ghostRead))
-    entries.append(.toggle(1, next(), .stealthStories, ui("Story'larni anonim ko'rish"), AlfaSettings.stealthStories))
-    entries.append(.info(1, next(), ui("Yoqilganda boshqalar sizni onlayn, yozayotgan, xabarini yoki story'sini ko'rgan holda ko'rmaydi.")))
+    entries.append(.toggle(1, next(), .ghostOnline, ui("Onlayn ko'rinmaslik"), ui("Hech kim sizni onlayn holatda ko'rmaydi"), "eye.slash.fill", 0x8e8e93, AlfaSettings.ghostOnline))
+    entries.append(.toggle(1, next(), .ghostTyping, ui("«Yozyapti...» ni yubormaslik"), ui("Suhbatdosh siz yozayotganingizni ko'rmaydi"), "pencil.slash", 0xff9500, AlfaSettings.ghostTyping))
+    entries.append(.toggle(1, next(), .ghostRead, ui("O'qilganini bildirmaslik"), ui("Xabarni o'qiganingiz yuboruvchiga bildirilmaydi"), "envelope.open.fill", 0x007aff, AlfaSettings.ghostRead))
+    entries.append(.toggle(1, next(), .stealthStories, ui("Story'larni anonim ko'rish"), ui("Story muallifi siz ko'rganingizni bilmaydi"), "play.circle.fill", 0x5856d6, AlfaSettings.stealthStories))
+    entries.append(.info(1, next(), ui("Chatlar ro'yxati tepasidagi ko'z belgisi uchala Ghost sozlamasini bir bosishda yoqadi.")))
 
     entries.append(.header(2, next(), ui("KUZATUV")))
-    entries.append(.toggle(2, next(), .onlineLog, ui("Kontaktlar onlayn tarixini yozish"), AlfaSettings.onlineLog))
-    entries.append(.action(2, next(), .onlineLog, ui("Onlayn tarixi")))
-    entries.append(.toggle(2, next(), .profileLog, ui("Profil o'zgarishlarini yozish"), AlfaSettings.profileLog))
-    entries.append(.action(2, next(), .profileLog, ui("Profil o'zgarishlari")))
-    entries.append(.toggle(2, next(), .typingLog, ui("«Yozdi, yubormadi» jurnali"), AlfaSettings.typingLog))
-    entries.append(.action(2, next(), .typingLog, ui("Yozdi, yubormadi")))
-    entries.append(.info(2, next(), ui("Kim qachon onlayn bo'lgani, username, rasm yoki raqamini o'zgartirgani va sizga yozib, yubormagani. Hammasi faqat telefoningizda saqlanadi.")))
+    entries.append(.toggle(2, next(), .onlineLog, ui("Kontaktlar onlayn tarixini yozish"), ui("Kim qachon onlayn bo'lgani yozib boriladi"), "clock.fill", 0x34c759, AlfaSettings.onlineLog))
+    entries.append(.action(2, next(), .onlineLog, ui("Onlayn tarixi"), "list.bullet.rectangle", 0x34c759))
+    entries.append(.toggle(2, next(), .profileLog, ui("Profil o'zgarishlarini yozish"), ui("Username, rasm, raqam yoki ism o'zgarishi"), "person.crop.circle.badge.exclamationmark", 0x007aff, AlfaSettings.profileLog))
+    entries.append(.action(2, next(), .profileLog, ui("Profil o'zgarishlari"), "list.bullet.rectangle", 0x007aff))
+    entries.append(.toggle(2, next(), .typingLog, ui("«Yozdi, yubormadi» jurnali"), ui("Sizga yozib, yubormaganlar"), "text.bubble.fill", 0xff9500, AlfaSettings.typingLog))
+    entries.append(.action(2, next(), .typingLog, ui("Yozdi, yubormadi"), "list.bullet.rectangle", 0xff9500))
+    entries.append(.info(2, next(), ui("Hammasi faqat telefoningizda saqlanadi.")))
 
     entries.append(.header(3, next(), ui("XAVFSIZLIK")))
-    entries.append(.toggle(3, next(), .linkGuard, ui("Shubhali havolalardan ogohlantirish"), AlfaSettings.linkGuard))
-    entries.append(.toggle(3, next(), .blockAds, ui("Telegram reklamalarini yashirish"), AlfaSettings.blockAds))
-    entries.append(.info(3, next(), ui("Soxta bank, Click, Payme yoki Telegram saytlari, APK yuklovchi va «sovg'a» va'da qiluvchi havolalarni ochishdan oldin ogohlantiradi.")))
+    entries.append(.toggle(3, next(), .linkGuard, ui("Shubhali havolalardan ogohlantirish"), ui("Soxta bank, Click, Payme, Telegram saytlari va APK havolalari"), "checkmark.shield.fill", 0x007aff, AlfaSettings.linkGuard))
+    entries.append(.toggle(3, next(), .blockAds, ui("Telegram reklamalarini yashirish"), ui("Kanallardagi homiylik xabarlari ko'rinmaydi"), "nosign", 0xff3b30, AlfaSettings.blockAds))
 
     entries.append(.header(8, next(), ui("CHATLAR")))
-    entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), AlfaSettings.hideStories))
-    entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), AlfaSettings.silentSend))
-    entries.append(.toggle(8, next(), .roundVideoAsk, ui("Dumaloq videoda kamerani so'rash"), AlfaSettings.roundVideoAsk))
-    entries.append(.info(8, next(), ui("Ovozsiz yuborilgan xabar qabul qiluvchida tovushsiz keladi. Story qatori chatlar ro'yxatiga qaytganingizda yashiriladi. Dumaloq video tugmasini bosib tursangiz, old yoki orqa kamerani tanlaysiz — yozuv qo'lsiz davom etadi.")))
+    entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), ui("Chatlar ro'yxati tepasidagi story qatori"), "circle.dashed", 0xaf52de, AlfaSettings.hideStories))
+    entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), ui("Xabarlaringiz qabul qiluvchida tovushsiz keladi"), "bell.slash.fill", 0x5856d6, AlfaSettings.silentSend))
+    entries.append(.toggle(8, next(), .roundVideoAsk, ui("Dumaloq videoda kamerani so'rash"), ui("Bosib turganda old yoki orqa kamera so'raladi"), "video.circle.fill", 0xff9500, AlfaSettings.roundVideoAsk))
 
     entries.append(.header(9, next(), ui("MAXFIYLIK")))
-    entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar")))
+    entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar"), "person.crop.circle.badge.xmark", 0x007aff))
     entries.append(.info(9, next(), ui("Chatni qulflash: chatlar ro'yxatida chatni bosib turing → «Chatni qulflash». Qulflangan chat Face ID yoki telefon paroli bilan ochiladi va xabarlari ro'yxatda ko'rinmaydi.")))
 
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
-    entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), AlfaSettings.unrestrictedSave))
+    entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), ui("Rasm, video va matnni saqlash, skrinshot olish"), "square.and.arrow.down.fill", 0x30b0c7, AlfaSettings.unrestrictedSave))
     entries.append(.info(6, next(), ui("Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.")))
 
     entries.append(.header(4, next(), ui("TIL")))
-    entries.append(.toggle(4, next(), .cyrillicUi, ui("Kirill alifbosi (Ўзбекча)"), AlfaSettings.cyrillicUi))
-    entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), AlfaSettings.sendCyrillic))
+    entries.append(.toggle(4, next(), .cyrillicUi, ui("Kirill alifbosi (Ўзбекча)"), ui("O'zbek tili tanlanganda ilova kirillda"), "character.book.closed.fill", 0x30b8a8, AlfaSettings.cyrillicUi))
+    entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), ui("Lotincha matn kirillga o'girib yuboriladi"), "character.cursor.ibeam", 0x007aff, AlfaSettings.sendCyrillic))
     entries.append(.info(4, next(), ui("O'zbek tili tanlangan bo'lsa, ilova kirillda ko'rinadi. Tilni Sozlamalar → Til bo'limidan tanlang.")))
 
     return entries
