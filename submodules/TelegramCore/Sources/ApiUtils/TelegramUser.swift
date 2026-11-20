@@ -245,6 +245,10 @@ extension TelegramUser {
                         if lhs.flags.contains(.isCloseFriend) {
                             userFlags.insert(.isCloseFriend)
                         }
+                        // AlfaGram: a "min" user doesn't carry the contact flags; keep the known mutual-contact state.
+                        if lhs.flags.contains(.mutualContact) {
+                            userFlags.insert(.mutualContact)
+                        }
                         if lhs.flags.contains(.requirePremium) {
                             userFlags.insert(.requirePremium)
                         }

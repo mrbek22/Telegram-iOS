@@ -3372,6 +3372,43 @@ public final class ChatListNode: ListViewImpl {
         }
     }
     
+    /// AlfaGram: selects every loaded chat of this list (up to the selection limit), or clears the
+    /// selection when all of them are already selected.
+    public func alfaToggleSelectAll() {
+        guard let view = self.chatListView else {
+            return
+        }
+        var peers: [EnginePeer] = []
+        for entry in view.filteredEntries {
+            if case let .PeerEntry(data) = entry, data.promoInfo == nil, let peer = data.peer.peer {
+                peers.append(peer)
+            }
+        }
+        if peers.isEmpty {
+            return
+        }
+        let limit = Int(self.selectionLimit)
+        self.updateState { state in
+            var state = state
+            let allSelected = peers.prefix(limit).allSatisfy { state.selectedPeerIds.contains($0.id) }
+            if allSelected {
+                state.selectedPeerIds.removeAll()
+                state.selectedPeerMap.removeAll()
+            } else {
+                for peer in peers {
+                    if state.selectedPeerIds.count >= limit {
+                        break
+                    }
+                    if !state.selectedPeerIds.contains(peer.id) {
+                        state.selectedPeerIds.insert(peer.id)
+                        state.selectedPeerMap[peer.id] = peer
+                    }
+                }
+            }
+            return state
+        }
+    }
+
     public func updateState(_ f: (ChatListNodeState) -> ChatListNodeState) {
         let state = f(self.currentState)
         if state != self.currentState {

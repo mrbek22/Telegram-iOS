@@ -123,6 +123,7 @@ public enum AlfaStrings {
         "Chat qulflandi: ochish uchun Face ID yoki parol so'raladi": ("Chat locked: Face ID or the passcode is needed to open it", "Чат заблокирован: для открытия нужен Face ID или код"),
         "Media hali yuklanmagan": ("The media isn't downloaded yet", "Медиа ещё не загружено"),
         "Hammasini belgilash": ("Select all", "Выбрать все"),
+        "Hammasi": ("All", "Все"),
         "Belgilarni olib tashlash": ("Deselect all", "Снять выделение"),
         "CHEKLOVSIZ": ("NO RESTRICTIONS", "БЕЗ ОГРАНИЧЕНИЙ"),
         "Taqiqlangan chatlardan saqlash": ("Save from restricted chats", "Сохранять из защищённых чатов"),
@@ -153,7 +154,6 @@ public enum AlfaStrings {
         "Ro'yxatdan o'tgan": ("Registered", "Регистрация"),
 
         // Chat list tabs
-        "Hammasi": ("All", "Все"),
         "Shaxsiy": ("Personal", "Личные"),
         "O'zaro kontaktlar": ("Mutual contacts", "Взаимные контакты"),
         "Guruhlar": ("Groups", "Группы"),

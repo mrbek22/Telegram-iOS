@@ -1009,6 +1009,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         }
     }
     
+    /// AlfaGram: «All» in the selection mode.
+    func alfaToggleSelectAllChats() {
+        self.chatListDisplayNode.effectiveContainerNode.currentItemNode.alfaToggleSelectAll()
+    }
+
     /// AlfaGram: re-lays out the visible chat rows (after a chat was locked or unlocked).
     func alfaRefreshRows() {
         self.chatListDisplayNode.effectiveContainerNode.currentItemNode.updateState { state in
@@ -7389,7 +7394,13 @@ private final class ChatListLocationContext {
         
         if stateAndFilterId.state.editing {
             if case .chatList(.root) = self.location {
-                self.rightButton = nil
+                // AlfaGram: «All» selects every loaded chat of the current tab (again: clears the selection).
+                self.rightButton = NavigationBarComponent.Button(id: "alfaSelectAll",
+                    content: .text(title: AlfaCyrillic.ui("Hammasi"), isBold: false),
+                    action: { [weak self] _ in
+                        self?.parentController?.alfaToggleSelectAllChats()
+                    }
+                )
                 self.storyButton = nil
                 self.alfaGhostButton = nil
                 self.proxyButton = nil

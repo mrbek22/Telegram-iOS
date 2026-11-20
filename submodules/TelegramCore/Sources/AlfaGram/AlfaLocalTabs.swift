@@ -75,9 +75,8 @@ public enum AlfaLocalTabs {
     static func tabs(mutualContactIds: [PeerId]) -> [ChatListFilter] {
         var result: [ChatListFilter] = []
         result.append(tab(id: personalId, icon: "👤", categories: [.contacts, .nonContacts]))
-        if !mutualContactIds.isEmpty {
-            result.append(tab(id: mutualId, icon: "🤝", categories: [], includePeers: mutualContactIds))
-        }
+        // Always shown (an empty list just shows no chats yet), so the tab never disappears.
+        result.append(tab(id: mutualId, icon: "🤝", categories: [], includePeers: mutualContactIds))
         result.append(tab(id: groupsId, icon: "👥", categories: [.groups]))
         result.append(tab(id: channelsId, icon: "📢", categories: [.channels]))
         result.append(tab(id: botsId, icon: "🤖", categories: [.bots]))
