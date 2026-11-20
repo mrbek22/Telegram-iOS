@@ -7,6 +7,7 @@ import TelegramPresentationData
 import ItemListUI
 import PresentationDataUtils
 import AccountContext
+import AccountUtils
 import AlfaGramUI
 
 private enum AlfaGramSettingsAction: Equatable {
@@ -15,6 +16,7 @@ private enum AlfaGramSettingsAction: Equatable {
     case typingLog
     case helpGroup
     case autoFolders
+    case hiddenAccounts
 }
 
 private final class AlfaGramSettingsControllerArguments {
@@ -109,7 +111,12 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.header(8, next(), ui("CHATLAR")))
     entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), AlfaSettings.hideStories))
     entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), AlfaSettings.silentSend))
-    entries.append(.info(8, next(), ui("Ovozsiz yuborilgan xabar qabul qiluvchida tovushsiz keladi. Story qatori chatlar ro'yxatiga qaytganingizda yashiriladi.")))
+    entries.append(.toggle(8, next(), .roundVideoAsk, ui("Dumaloq videoda kamerani so'rash"), AlfaSettings.roundVideoAsk))
+    entries.append(.info(8, next(), ui("Ovozsiz yuborilgan xabar qabul qiluvchida tovushsiz keladi. Story qatori chatlar ro'yxatiga qaytganingizda yashiriladi. Dumaloq video tugmasini bosib tursangiz, old yoki orqa kamerani tanlaysiz — yozuv qo'lsiz davom etadi.")))
+
+    entries.append(.header(9, next(), ui("MAXFIYLIK")))
+    entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar")))
+    entries.append(.info(9, next(), ui("Chatni qulflash: chatlar ro'yxatida chatni bosib turing → «Chatni qulflash». Qulflangan chat Face ID yoki telefon paroli bilan ochiladi va xabarlari ro'yxatda ko'rinmaydi.")))
 
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
     entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), AlfaSettings.unrestrictedSave))
@@ -121,6 +128,97 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.info(4, next(), ui("O'zbek tili tanlangan bo'lsa, ilova kirillda ko'rinadi. Tilni Sozlamalar → Til bo'limidan tanlang.")))
 
     return entries
+}
+
+// MARK: - Hidden accounts
+
+private final class AlfaHiddenAccountsArguments {
+    let toggle: (EnginePeer.Id, Bool) -> Void
+    let open: (AccountRecordId) -> Void
+
+    init(toggle: @escaping (EnginePeer.Id, Bool) -> Void, open: @escaping (AccountRecordId) -> Void) {
+        self.toggle = toggle
+        self.open = open
+    }
+}
+
+private enum AlfaHiddenAccountsEntry: ItemListNodeEntry, Equatable {
+    case account(Int32, EnginePeer.Id, String, Bool)
+    case open(Int32, AccountRecordId, String)
+    case info(Int32, Int32, String)
+
+    var section: ItemListSectionId {
+        switch self {
+        case .account:
+            return 0
+        case .open:
+            return 1
+        case let .info(section, _, _):
+            return section
+        }
+    }
+
+    var stableId: Int32 {
+        switch self {
+        case let .account(id, _, _, _), let .open(id, _, _), let .info(_, id, _):
+            return id
+        }
+    }
+
+    static func <(lhs: AlfaHiddenAccountsEntry, rhs: AlfaHiddenAccountsEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let arguments = arguments as! AlfaHiddenAccountsArguments
+        switch self {
+        case let .account(_, peerId, title, hidden):
+            return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: hidden, sectionId: self.section, style: .blocks, updated: { value in
+                arguments.toggle(peerId, value)
+            })
+        case let .open(_, accountId, title):
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: title, label: "", sectionId: self.section, style: .blocks, action: {
+                arguments.open(accountId)
+            })
+        case let .info(_, _, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        }
+    }
+}
+
+/// AlfaGram: which accounts are hidden from the accounts list and the switcher; a hidden one opens from here.
+private func alfaHiddenAccountsController(context: AccountContext) -> ViewController {
+    let arguments = AlfaHiddenAccountsArguments(toggle: { peerId, hidden in
+        AlfaHiddenAccounts.setHidden(accountPeerId: peerId, hidden: hidden)
+    }, open: { accountId in
+        context.sharedContext.switchToAccount(id: accountId, fromSettingsController: nil, withChatListController: nil)
+    })
+
+    let signal = combineLatest(context.sharedContext.presentationData, activeAccountsAndPeers(context: context, includePrimary: true, includeHidden: true), AlfaHiddenAccounts.idsSignal())
+    |> deliverOnMainQueue
+    |> map { presentationData, accountsAndPeers, hiddenIds -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let ui = AlfaCyrillic.ui
+        var entries: [AlfaHiddenAccountsEntry] = []
+        var id: Int32 = 0
+        for (_, peer, _) in accountsAndPeers.1 {
+            id += 1
+            entries.append(.account(id, peer.id, peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder), hiddenIds.contains(peer.id.toInt64())))
+        }
+        id += 1
+        entries.append(.info(0, id, ui("Yoqilgan akkaunt «Hisoblar» ro'yxatida va akkaunt almashtirishda ko'rinmaydi. Unga faqat shu yerdan, Face ID yoki parol bilan kirasiz. Bildirishnomalari kelaveradi — kerak bo'lsa, o'sha akkauntda o'chirib qo'ying.")))
+        for (accountContext, peer, _) in accountsAndPeers.1 {
+            if hiddenIds.contains(peer.id.toInt64()) && accountContext.account.id != context.account.id {
+                id += 1
+                entries.append(.open(id, accountContext.account.id, ui("Kirish") + ": " + peer.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder)))
+            }
+        }
+
+        let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text(ui("Maxfiy akkauntlar")), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
+        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: entries, style: .blocks, animateChanges: false)
+        return (controllerState, (listState, arguments))
+    }
+
+    return ItemListController(context: context, state: signal)
 }
 
 public func alfaGramSettingsController(context: AccountContext) -> ViewController {
@@ -149,6 +247,12 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
             pushImpl?(alfaTypingLogController(context: context))
         case .helpGroup:
             openHelpImpl?()
+        case .hiddenAccounts:
+            AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { success in
+                if success {
+                    pushImpl?(alfaHiddenAccountsController(context: context))
+                }
+            })
         case .autoFolders:
             let _ = (alfaCreateAutoFolders(context: context)
             |> deliverOnMainQueue).start(next: { count in

@@ -2696,7 +2696,11 @@ extension ChatControllerImpl {
                         })]), in: .window(.root))
                     } else {
                         if isVideo {
-                            strongSelf.requestVideoRecorder()
+                            if AlfaSettings.roundVideoAsk {
+                                strongSelf.alfaAskRoundVideoCamera()
+                            } else {
+                                strongSelf.requestVideoRecorder()
+                            }
                         } else {
                             strongSelf.requestAudioRecorder(beginWithTone: false)
                         }

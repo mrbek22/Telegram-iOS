@@ -2772,7 +2772,17 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                         messageText = psaText
                         richTextPreview = nil
                     }
-                
+
+                    // AlfaGram: a locked chat shows no message preview.
+                    if AlfaChatLock.isLocked(accountPeerId: item.context.account.peerId, peerId: itemPeer.peerId) {
+                        initialHideAuthor = true
+                        messageText = AlfaCyrillic.ui("🔒 Qulflangan chat")
+                        messageEntities = []
+                        spoilers = nil
+                        customEmojiRanges = nil
+                        richTextPreview = nil
+                    }
+
                     switch itemPeer.peer {
                     case .user:
                         if let attribute = messages.first?._asMessage().reactionsAttribute {
@@ -3279,7 +3289,7 @@ public class ChatListItemNode: ItemListRevealOptionsItemNode {
                             }
                         }
                 
-                        var displayMediaPreviews = true
+                        var displayMediaPreviews = !AlfaChatLock.isLocked(accountPeerId: item.context.account.peerId, peerId: message.id.peerId)
                         if message._asMessage().containsSecretMedia {
                             displayMediaPreviews = false
                         } else if let _ = message.peers[message.id.peerId] as? TelegramSecretChat {

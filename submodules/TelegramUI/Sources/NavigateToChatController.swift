@@ -20,8 +20,22 @@ import SavedMessagesScreen
 import WallpaperGalleryScreen
 import ChatMessageNotificationItem
 import FaceScanScreen
+import AlfaGramUI
 
 public func navigateToChatControllerImpl(_ params: NavigateToChatControllerParams) {
+    // AlfaGram: a locked chat opens only after Face ID / Touch ID / the device passcode.
+    let alfaAccountPeerId = params.context.account.peerId
+    let alfaPeerId = params.chatLocation.peerId
+    if AlfaChatLock.needsUnlock(accountPeerId: alfaAccountPeerId, peerId: alfaPeerId) {
+        AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Qulflangan chatni ochish"), completion: { success in
+            if success {
+                AlfaChatLock.markUnlocked(accountPeerId: alfaAccountPeerId, peerId: alfaPeerId)
+                navigateToChatControllerImpl(params)
+            }
+        })
+        return
+    }
+
     if case let .peer(peer) = params.chatLocation {
         let _ = params.context.engine.peers.ensurePeerIsLocallyAvailable(peer: peer).startStandalone()
     }

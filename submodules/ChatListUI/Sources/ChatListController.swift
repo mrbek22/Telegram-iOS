@@ -65,6 +65,33 @@ import AlertComponent
 import AlertHeaderComponent
 import AvatarComponent
 
+/// AlfaGram: the long-press preview of a locked chat — a lock instead of the messages.
+private final class AlfaLockedChatPreviewController: ViewController {
+    private let presentationData: PresentationData
+
+    init(presentationData: PresentationData) {
+        self.presentationData = presentationData
+        super.init(navigationBarPresentationData: nil)
+    }
+
+    required init(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func loadDisplayNode() {
+        self.displayNode = ASDisplayNode()
+        self.displayNode.backgroundColor = self.presentationData.theme.list.plainBackgroundColor
+        self.displayNodeDidLoad()
+
+        let imageView = UIImageView(image: UIImage(systemName: "lock.fill", withConfiguration: UIImage.SymbolConfiguration(pointSize: 44.0, weight: .semibold)))
+        imageView.tintColor = self.presentationData.theme.list.itemSecondaryTextColor
+        imageView.contentMode = .center
+        imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        imageView.frame = self.displayNode.view.bounds
+        self.displayNode.view.addSubview(imageView)
+    }
+}
+
 private final class ContextControllerContentSourceImpl: ContextControllerContentSource {
     let controller: ViewController
     weak var sourceNode: ASDisplayNode?
@@ -982,6 +1009,16 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         }
     }
     
+    /// AlfaGram: re-lays out the visible chat rows (after a chat was locked or unlocked).
+    func alfaRefreshRows() {
+        self.chatListDisplayNode.effectiveContainerNode.currentItemNode.updateState { state in
+            var state = state
+            let current = state.presentationData
+            state.presentationData = ChatListPresentationData(theme: current.theme, fontSize: current.fontSize, strings: current.strings, dateTimeFormat: current.dateTimeFormat, nameSortOrder: current.nameSortOrder, nameDisplayOrder: current.nameDisplayOrder, disableAnimations: current.disableAnimations)
+            return state
+        }
+    }
+
     private func updateThemeAndStrings() {
         if case .chatList(.root) = self.location {
             self.tabBarItem.title = self.presentationData.strings.DialogList_Title
@@ -2128,6 +2165,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             } else if case .community = peer {
                 let communityController = strongSelf.makeCommunityViewController(communityId: peer.id, mode: .preview)
                 let contextController = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .controller(ContextControllerContentSourceImpl(controller: communityController, sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController)), items: chatContextMenuItems(context: strongSelf.context, peerId: peer.id, promoInfo: nil, source: .search(source), chatListController: strongSelf, joined: false) |> map { ContextController.Items(content: .list($0)) }, gesture: gesture)
+                strongSelf.presentInGlobalOverlay(contextController)
+            } else if AlfaChatLock.needsUnlock(accountPeerId: strongSelf.context.account.peerId, peerId: peer.id) {
+                // AlfaGram: no message preview for a locked chat.
+                let previewController = AlfaLockedChatPreviewController(presentationData: strongSelf.presentationData)
+                let contextController = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .controller(ContextControllerContentSourceImpl(controller: previewController, sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController)), items: chatContextMenuItems(context: strongSelf.context, peerId: peer.id, promoInfo: nil, source: .search(source), chatListController: strongSelf, joined: false) |> map { ContextController.Items(content: .list($0)) }, gesture: gesture)
                 strongSelf.presentInGlobalOverlay(contextController)
             } else {
                 var dismissPreviewingImpl: ((Bool) -> (() -> Void))?

@@ -348,6 +348,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     private var recaptchaClientsBySiteKey: [String: Promise<RecaptchaClient>] = [:]
         
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        AlfaChatLock.relockAll()
         precondition(!testIsLaunched)
         testIsLaunched = true
         CrashReportCollector.shared.start()
@@ -2055,6 +2056,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func handleDidEnterBackground() {
+        // AlfaGram: locked chats ask again after the app was in the background.
+        AlfaChatLock.relockAll()
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in

@@ -7,10 +7,15 @@ import AccountContext
 public let maximumNumberOfAccounts = 10
 public let maximumPremiumNumberOfAccounts = 10
 
-public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
+/// AlfaGram: `includeHidden: false` leaves out the accounts hidden in AlfaGram settings (except the current one).
+public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool = false, includeHidden: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
     let sharedContext = context.sharedContext
-    return context.sharedContext.activeAccountContexts
-    |> mapToSignal { primary, activeAccounts, _ -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> in
+    return combineLatest(context.sharedContext.activeAccountContexts, includeHidden ? Signal<Set<Int64>, NoError>.single(Set<Int64>()) : AlfaHiddenAccounts.idsSignal())
+    |> mapToSignal { activeAccountsData, hiddenIds -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> in
+        let primary = activeAccountsData.primary
+        let activeAccounts = activeAccountsData.accounts.filter { _, accountContext, _ in
+            return accountContext.account.id == primary?.account.id || !hiddenIds.contains(accountContext.account.peerId.toInt64())
+        }
         var accounts: [Signal<(AccountContext, EnginePeer, Int32)?, NoError>] = []
         func accountWithPeer(_ context: AccountContext) -> Signal<(AccountContext, EnginePeer, Int32)?, NoError> {
             return combineLatest(context.account.postbox.peerView(id: context.account.peerId), renderedTotalUnreadCount(accountManager: sharedContext.accountManager, engine: context.engine))

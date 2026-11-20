@@ -38,12 +38,18 @@ public enum AlfaSettings {
         case hideStories
         /// Every outgoing message is sent without a notification sound.
         case silentSend
+        /// Before a round video message, ask which camera to record with.
+        case roundVideoAsk
+        /// Round video messages start with the back camera (the last answer to `roundVideoAsk`).
+        case roundVideoBackCamera
 
         public var defaultValue: Bool {
             switch self {
             case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave, .stealthStories:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend:
+            case .roundVideoAsk:
+                return true
+            case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend, .roundVideoBackCamera:
                 return false
             }
         }
@@ -146,6 +152,14 @@ public enum AlfaSettings {
 
     public static var silentSend: Bool {
         return value(.silentSend)
+    }
+
+    public static var roundVideoAsk: Bool {
+        return value(.roundVideoAsk)
+    }
+
+    public static var roundVideoBackCamera: Bool {
+        return value(.roundVideoBackCamera)
     }
 
     public static var unrestrictedSave: Bool {

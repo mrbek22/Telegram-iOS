@@ -303,7 +303,7 @@ public func galleryItemForEntry(
     
     if let image = media as? TelegramMediaImage {
         if let file = image.video {
-            let captureProtected = message.isCopyProtected() || message.containsSecretMedia || message.minAutoremoveOrClearTimeout == viewOnceTimeout || message.paidContent != nil || peerIsCopyProtected
+            let captureProtected = message.isCopyProtected() || (!AlfaSettings.unrestrictedSave && (message.containsSecretMedia || message.minAutoremoveOrClearTimeout == viewOnceTimeout)) || message.paidContent != nil || peerIsCopyProtected
             
             var originData = GalleryItemOriginData(title: message.effectiveAuthor.flatMap(EnginePeer.init)?.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder), timestamp: message.timestamp)
             if Namespaces.Message.allNonRegular.contains(message.id.namespace) {
@@ -360,7 +360,7 @@ public func galleryItemForEntry(
     } else if let file = media as? TelegramMediaFile {
         if file.isVideo {
             let content: UniversalVideoContent
-            let captureProtected = message.isCopyProtected() || message.containsSecretMedia || message.minAutoremoveOrClearTimeout == viewOnceTimeout || message.paidContent != nil || peerIsCopyProtected
+            let captureProtected = message.isCopyProtected() || (!AlfaSettings.unrestrictedSave && (message.containsSecretMedia || message.minAutoremoveOrClearTimeout == viewOnceTimeout)) || message.paidContent != nil || peerIsCopyProtected
             if file.isAnimated {
                 content = NativeVideoContent(id: .message(message.stableId, file.fileId), userLocation: .peer(message.id.peerId), fileReference: .message(message: MessageReference(message), media: file), imageReference: mediaImage.flatMap({ ImageMediaReference.message(message: MessageReference(message), media: $0) }), loopVideo: true, enableSound: false, tempFilePath: tempFilePath, captureProtected: captureProtected, storeAfterDownload: generateStoreAfterDownload?(message, file))
             } else {

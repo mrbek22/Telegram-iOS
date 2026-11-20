@@ -15,6 +15,7 @@ import TelegramPresentationData
 import TelegramStringFormatting
 import ChatTimerScreen
 import NotificationPeerExceptionController
+import AlfaGramUI
 
 func archiveContextMenuItems(context: AccountContext, group: EngineChatList.Group, chatListController: ChatListControllerImpl?) -> Signal<[ContextMenuItem], NoError> {
     let presentationData = context.sharedContext.currentPresentationData.with({ $0 })
@@ -214,6 +215,32 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                             isCommunity = false
                         }
                         
+                        // AlfaGram: lock / unlock this chat (it then opens only after Face ID / the passcode).
+                        if !isForum && !isCommunity {
+                            let alfaIsLocked = AlfaChatLock.isLocked(accountPeerId: context.account.peerId, peerId: peerId)
+                            items.append(.action(ContextMenuActionItem(text: alfaIsLocked ? AlfaCyrillic.ui("Qulfni olib tashlash") : AlfaCyrillic.ui("Chatni qulflash"), icon: { theme in generateTintedImage(image: UIImage(systemName: alfaIsLocked ? "lock.open" : "lock"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
+                                c?.dismiss(completion: {
+                                    let apply: () -> Void = {
+                                        AlfaChatLock.setLocked(accountPeerId: context.account.peerId, peerId: peerId, locked: !alfaIsLocked)
+                                        chatListController?.alfaRefreshRows()
+                                        let text = alfaIsLocked ? AlfaCyrillic.ui("Chat qulfdan chiqarildi") : AlfaCyrillic.ui("Chat qulflandi: ochish uchun Face ID yoki parol so'raladi")
+                                        chatListController?.present(UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: text, timeout: 3.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: true, action: { _ in
+                                            return false
+                                        }), in: .current)
+                                    }
+                                    if alfaIsLocked {
+                                        AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Chat qulfini olib tashlash"), completion: { success in
+                                            if success {
+                                                apply()
+                                            }
+                                        })
+                                    } else {
+                                        apply()
+                                    }
+                                })
+                            })))
+                        }
+
                         // A folder's include/exclude lists are matched against a peer's identity-overriding
                         // associated peer (ChatListFilterPredicate.includes), so a secret chat's own id can
                         // never match one: adding or removing it would write an entry that changes nothing

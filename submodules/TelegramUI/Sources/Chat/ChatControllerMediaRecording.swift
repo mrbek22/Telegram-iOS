@@ -146,6 +146,41 @@ extension ChatControllerImpl {
         }
     }
     
+    /// AlfaGram: asks front or back camera, then records the round video hands-free (the finger is already up).
+    func alfaAskRoundVideoCamera() {
+        let presentationData = self.presentationData
+        let actionSheet = ActionSheetController(presentationData: presentationData)
+        let start: (Bool) -> Void = { [weak self, weak actionSheet] useBackCamera in
+            actionSheet?.dismissAnimated()
+            guard let self else {
+                return
+            }
+            AlfaSettings.setValue(.roundVideoBackCamera, useBackCamera)
+            self.lockMediaRecordingRequestId = self.beginMediaRecordingRequestId
+            self.requestVideoRecorder()
+            Queue.mainQueue().after(0.3, { [weak self] in
+                self?.lockMediaRecorder()
+            })
+        }
+        actionSheet.setItemGroups([
+            ActionSheetItemGroup(items: [
+                ActionSheetTextItem(title: AlfaCyrillic.ui("Dumaloq video qaysi kamerada yozilsin?")),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Old kamera (selfi)"), color: .accent, action: {
+                    start(false)
+                }),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Orqa kamera"), color: .accent, action: {
+                    start(true)
+                })
+            ]),
+            ActionSheetItemGroup(items: [
+                ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                })
+            ])
+        ])
+        self.present(actionSheet, in: .window(.root))
+    }
+
     func requestVideoRecorder() {
         if self.videoRecorderValue == nil {
             if let currentInputPanelFrame = self.chatDisplayNode.currentInputPanelFrame() {

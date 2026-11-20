@@ -13,6 +13,7 @@ import AppBundle
 import LocalizedPeerData
 import TooltipUI
 import TelegramNotices
+import UndoUI
 
 private func galleryMediaForMedia(media: Media) -> Media? {
     if let media = media as? TelegramMediaImage {
@@ -57,6 +58,30 @@ private func mediaForMessage(message: Message) -> Media? {
 
 private final class SecretMediaPreviewControllerNode: GalleryControllerNode {
     fileprivate var timeoutNode: RadialStatusNode?
+    /// AlfaGram: saves the view-once / self-destructing photo or video to Photos.
+    fileprivate var alfaSaveButton: UIButton?
+    var alfaSavePressed: () -> Void = {}
+
+    fileprivate func alfaSetupSaveButton() {
+        guard self.alfaSaveButton == nil else {
+            return
+        }
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "square.and.arrow.down", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14.0, weight: .semibold)), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = UIColor(white: 0.0, alpha: 0.5)
+        button.layer.cornerRadius = 15.0
+        button.addTarget(self, action: #selector(self.alfaSaveTapped), for: .touchUpInside)
+        self.view.addSubview(button)
+        self.alfaSaveButton = button
+        if let (layout, navigationHeight) = self.validLayout {
+            self.layoutTimeoutNode(layout, navigationBarHeight: navigationHeight, transition: .immediate)
+        }
+    }
+
+    @objc private func alfaSaveTapped() {
+        self.alfaSavePressed()
+    }
     
     private var validLayout: (ContainerViewLayout, CGFloat)?
         
@@ -114,6 +139,7 @@ private final class SecretMediaPreviewControllerNode: GalleryControllerNode {
         super.animateIn(animateContent: animateContent, useSimpleAnimation: useSimpleAnimation)
         
         self.timeoutNode?.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
+        self.alfaSaveButton?.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.2)
     }
     
     override func animateOut(animateContent: Bool, completion: @escaping () -> Void) {
@@ -122,10 +148,14 @@ private final class SecretMediaPreviewControllerNode: GalleryControllerNode {
         if let timeoutNode = self.timeoutNode {
             timeoutNode.layer.animateAlpha(from: timeoutNode.alpha, to: 0.0, duration: 0.2, removeOnCompletion: false)
         }
+        if let alfaSaveButton = self.alfaSaveButton {
+            alfaSaveButton.layer.animateAlpha(from: alfaSaveButton.alpha, to: 0.0, duration: 0.2, removeOnCompletion: false)
+        }
     }
     
     override func updateDismissTransition(_ value: CGFloat) {
         self.timeoutNode?.alpha = value
+        self.alfaSaveButton?.alpha = value
         self.onDismissTransitionUpdate(value)
     }
     
@@ -141,6 +171,11 @@ private final class SecretMediaPreviewControllerNode: GalleryControllerNode {
             let diameter: CGFloat = 28.0
             // In the bar's trailing place, clear of a status island beside the bar (iPhone Duo).
             transition.updateFrame(node: timeoutNode, frame: CGRect(origin: CGPoint(x: layout.size.width - layout.safeInsets.right - layout.navigationBarTrailingButtonsInset - diameter - 9.0, y: navigationBarHeight - 9.0 - diameter), size: CGSize(width: diameter, height: diameter)))
+        }
+        if let alfaSaveButton = self.alfaSaveButton {
+            let size: CGFloat = 30.0
+            let timeoutWidth: CGFloat = self.timeoutNode != nil ? 28.0 + 10.0 : 0.0
+            alfaSaveButton.frame = CGRect(origin: CGPoint(x: layout.size.width - layout.safeInsets.right - layout.navigationBarTrailingButtonsInset - timeoutWidth - size - 9.0, y: navigationBarHeight - 8.0 - size), size: CGSize(width: size, height: size))
         }
     }
 }
@@ -168,6 +203,8 @@ public final class SecretMediaPreviewController: ViewController {
     private var currentNodeMessageIsViewOnce = false
     private var currentMessageIsDismissed = false
     private var tempFile: TempBoxFile?
+    /// AlfaGram: the media on screen, for the Save button.
+    private var alfaMedia: Media?
     
     private let centralItemAttributesDisposable = DisposableSet();
     private let footerContentNode = Promise<(GalleryFooterContentNode?, GalleryOverlayContentNode?)>()
@@ -264,6 +301,10 @@ public final class SecretMediaPreviewController: ViewController {
             if let self {
                 self.presentViewOnceTooltip()
             }
+        }
+
+        self.controllerNode.alfaSavePressed = { [weak self] in
+            self?.alfaSaveCurrentMedia()
         }
         
         self.controllerNode.onDismissTransitionUpdate = { [weak self] _ in
@@ -421,7 +462,7 @@ public final class SecretMediaPreviewController: ViewController {
         if self.screenCaptureEventsDisposable == nil {
             self.screenCaptureEventsDisposable = (screenCaptureEvents()
             |> deliverOnMainQueue).start(next: { [weak self] _ in
-                if let strongSelf = self, strongSelf.traceVisibility() {
+                if let strongSelf = self, strongSelf.traceVisibility(), !AlfaSettings.unrestrictedSave {
                     if strongSelf.messageId.peerId.namespace == Namespaces.Peer.CloudUser {
                         let _ = enqueueMessages(account: strongSelf.context.account, peerId: strongSelf.messageId.peerId, messages: [.message(text: "", attributes: [], inlineStickers: [:], mediaReference: .standalone(media: TelegramMediaAction(action: TelegramMediaActionType.historyScreenshot)), threadId: nil, replyToMessageId: nil, replyToStoryId: nil, localGroupingKey: nil, correlationId: nil, bubbleUpEmojiOrStickersets: [])]).start()
                     } else if strongSelf.messageId.peerId.namespace == Namespaces.Peer.SecretChat {
@@ -528,8 +569,13 @@ public final class SecretMediaPreviewController: ViewController {
                     }
                 }
                                 
+                self.alfaMedia = mediaForMessage(message: message)
+                if AlfaSettings.unrestrictedSave && self.alfaMedia != nil {
+                    self.controllerNode.alfaSetupSaveButton()
+                }
+
                 let entry = GalleryEntry(entry: MessageHistoryEntry(message: message, isRead: false, location: nil, monthLocation: nil, attributes: MutableMessageHistoryEntryAttributes(authorIsContact: false)))
-                guard let item = galleryItemForEntry(context: self.context, presentationData: self.presentationData, entry: entry, streamVideos: false, hideControls: true, isSecret: true, playbackRate: { nil }, peerIsCopyProtected: true, tempFilePath: tempFilePath, playbackCompleted: { [weak self] in
+                guard let item = galleryItemForEntry(context: self.context, presentationData: self.presentationData, entry: entry, streamVideos: false, hideControls: true, isSecret: true, playbackRate: { nil }, peerIsCopyProtected: !AlfaSettings.unrestrictedSave, tempFilePath: tempFilePath, playbackCompleted: { [weak self] in
                     if let self {
                         if self.currentNodeMessageIsViewOnce || (duration < 30.0 && !self.currentMessageIsDismissed) {
                             if let node = self.controllerNode.pager.centralItemNode() as? UniversalVideoGalleryItemNode {
@@ -599,6 +645,35 @@ public final class SecretMediaPreviewController: ViewController {
         }
     }
     
+    /// AlfaGram: saves the photo / video on screen to Photos (works while it is open, before it disappears).
+    private func alfaSaveCurrentMedia() {
+        var saved = false
+        if let image = self.alfaMedia as? TelegramMediaImage {
+            if let representation = largestImageRepresentation(image.representations), let path = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(representation.resource.id)), let data = try? Data(contentsOf: URL(fileURLWithPath: path)), let uiImage = UIImage(data: data) {
+                UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
+                saved = true
+            }
+        } else if let file = self.alfaMedia as? TelegramMediaFile {
+            var sourcePath = self.tempFile?.path
+            if sourcePath == nil {
+                sourcePath = self.context.engine.resources.completedResourcePath(id: EngineMediaResource.Id(file.resource.id))
+            }
+            if let sourcePath {
+                let targetPath = NSTemporaryDirectory() + "alfa_" + UUID().uuidString + ".mp4"
+                do {
+                    try FileManager.default.copyItem(atPath: sourcePath, toPath: targetPath)
+                    UISaveVideoAtPathToSavedPhotosAlbum(targetPath, nil, nil, nil)
+                    saved = true
+                } catch {
+                }
+            }
+        }
+        let text = saved ? AlfaCyrillic.ui("Rasmlarga saqlandi") : AlfaCyrillic.ui("Media hali yuklanmagan")
+        self.present(UndoOverlayController(presentationData: self.presentationData, content: .info(title: nil, text: text, timeout: 2.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: false, action: { _ in
+            return false
+        }), in: .window(.root))
+    }
+
     private func dismissAllTooltips() {
         if let tooltipController = self.tooltipController {
             self.tooltipController = nil
