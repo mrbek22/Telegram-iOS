@@ -6837,7 +6837,7 @@ public final class StoryItemSetContainerComponent: Component {
                         self.requestSave()
                     })))
                     
-                    if case let .user(accountUser) = component.slice.effectivePeer, !isLiveStream {
+                    if case let .user(accountUser) = component.slice.effectivePeer, !isLiveStream, !AlfaSettings.stealthStories {
                         items.append(.action(ContextMenuActionItem(text: component.strings.Story_ContextStealthMode, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: accountUser.isPremium ? "Chat/Context Menu/Eye" : "Chat/Context Menu/EyeLocked"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, a in
@@ -7596,7 +7596,7 @@ public final class StoryItemSetContainerComponent: Component {
                         })))
                     }
                     
-                    if case .user = component.slice.effectivePeer, !isLiveStream {
+                    if case .user = component.slice.effectivePeer, !isLiveStream, !AlfaSettings.stealthStories {
                         items.append(.action(ContextMenuActionItem(text: component.strings.Story_ContextStealthMode, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: accountUser.isPremium ? "Chat/Context Menu/Eye" : "Chat/Context Menu/EyeLocked"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, a in

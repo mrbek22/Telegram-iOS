@@ -18,6 +18,7 @@ import PasswordSetupUI
 import InstantPageCache
 import WalletContext
 import UndoUI
+import AlfaGramUI
 
 extension PeerInfoScreenNode {
     func openSettings(section: PeerInfoSettingsSection) {
@@ -285,16 +286,13 @@ extension PeerInfoScreenNode {
                 guard let self else {
                     return
                 }
-                var link = "https://alfagram.uz"
-                if let username = peer?.addressName, !username.isEmpty {
-                    link = "https://alfagram.uz/\(username)"
-                }
-                let activity = UIActivityViewController(activityItems: [link], applicationActivities: nil)
-                if let popover = activity.popoverPresentationController {
-                    popover.sourceView = self.view
-                    popover.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 1.0, height: 1.0)
-                }
-                self.controller?.present(activity, animated: true, completion: nil)
+                // AlfaGram: the "My AlfaGram link" screen (QR card, copy, share, save).
+                let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+                let name = peer?.displayTitle(strings: presentationData.strings, displayOrder: presentationData.nameDisplayOrder) ?? ""
+                let linkController = AlfaMyLinkController(name: name, username: peer?.addressName, openUsernameSetup: { [weak self] in
+                    self?.openSettings(section: .username)
+                })
+                self.controller?.present(linkController, animated: true, completion: nil)
             })
         case .alfaHelp:
             let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }

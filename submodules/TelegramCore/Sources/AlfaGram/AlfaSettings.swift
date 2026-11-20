@@ -41,9 +41,9 @@ public enum AlfaSettings {
 
         public var defaultValue: Bool {
             switch self {
-            case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave:
+            case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave, .stealthStories:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead, .stealthStories, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend:
+            case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend:
                 return false
             }
         }
@@ -89,6 +89,11 @@ public enum AlfaSettings {
     }
 
     public static var stealthStories: Bool {
+        // One-time switch-on for builds where it used to be off by default (user request, 2026-11-20).
+        if !flag("stealthStoriesOnV2") {
+            setFlag("stealthStoriesOnV2", true)
+            UserDefaults.standard.set(true, forKey: Key.stealthStories.defaultsKey)
+        }
         return value(.stealthStories)
     }
 
@@ -114,6 +119,17 @@ public enum AlfaSettings {
 
     public static var typingLog: Bool {
         return value(.typingLog)
+    }
+
+    /// Ghost mode as one switch: hidden online status, no "typing…", no read receipts.
+    public static var ghostMode: Bool {
+        return ghostOnline && ghostTyping && ghostRead
+    }
+
+    public static func setGhostMode(_ value: Bool) {
+        setValue(.ghostOnline, value)
+        setValue(.ghostTyping, value)
+        setValue(.ghostRead, value)
     }
 
     public static var cyrillicUi: Bool {

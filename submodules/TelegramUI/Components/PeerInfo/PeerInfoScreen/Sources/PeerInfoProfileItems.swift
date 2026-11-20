@@ -202,7 +202,7 @@ func infoItems(
                 interaction.requestLayout(animated)
             }))
             if let alfaRegistered = AlfaAccountAge.format(userId: alfaUserId) {
-                items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 3101, label: AlfaCyrillic.ui("Ro'yxatdan o'tgan (taxminan)"), text: alfaRegistered, textColor: .primary, action: nil, requestLayout: { animated in
+                items[currentPeerInfoSection]!.append(PeerInfoScreenLabeledValueItem(id: 3101, label: AlfaCyrillic.ui("Ro'yxatdan o'tgan"), text: alfaRegistered, textColor: .primary, action: nil, requestLayout: { animated in
                     interaction.requestLayout(animated)
                 }))
             }

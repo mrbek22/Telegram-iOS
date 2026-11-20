@@ -3529,6 +3529,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                             }
                         })))
                         
+                        if !AlfaSettings.stealthStories {
                         items.append(.action(ContextMenuActionItem(text: presentationData.strings.StoryFeed_ViewAnonymously, icon: { theme in
                             return generateTintedImage(image: UIImage(bundleImageName: self.context.isPremium ? "Chat/Context Menu/Eye" : "Chat/Context Menu/EyeLocked"), color: theme.contextMenu.primaryColor)
                         }, action: { [weak self] _, a in
@@ -3552,6 +3553,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                                 })
                             }
                         })))
+                        }
                         
                         let hideText: String
                         if self.location == .chatList(groupId: .archive) {
@@ -6880,7 +6882,9 @@ private final class ChatListLocationContext {
     var rightButton: NavigationBarComponent.Button?
     var proxyButton: NavigationBarComponent.Button?
     var storyButton: NavigationBarComponent.Button?
-    
+    /// AlfaGram: Ghost mode on/off in one tap (an eye in the header).
+    var alfaGhostButton: NavigationBarComponent.Button?
+
     var rightButtons: [NavigationBarComponent.Button] {
         var result: [NavigationBarComponent.Button] = []
         if let rightButton = self.rightButton {
@@ -6888,6 +6892,9 @@ private final class ChatListLocationContext {
         }
         if let storyButton = self.storyButton {
             result.append(storyButton)
+        }
+        if let alfaGhostButton = self.alfaGhostButton {
+            result.append(alfaGhostButton)
         }
         if let proxyButton = self.proxyButton {
             result.append(proxyButton)
@@ -7289,6 +7296,27 @@ private final class ChatListLocationContext {
         self.stateDisposable?.dispose()
     }
     
+    private func alfaMakeGhostButton(presentationData: PresentationData) -> NavigationBarComponent.Button {
+        let isOn = AlfaSettings.ghostMode
+        let image = UIImage(systemName: isOn ? "eye.slash.fill" : "eye", withConfiguration: UIImage.SymbolConfiguration(pointSize: 17.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate)
+        let color = isOn ? presentationData.theme.rootController.navigationBar.accentTextColor : presentationData.theme.rootController.navigationBar.primaryTextColor
+        return NavigationBarComponent.Button(id: "alfaGhost",
+            content: .custom(AnyComponent(Image(image: image, tintColor: color, size: CGSize(width: 26.0, height: 24.0), contentMode: .center))),
+            action: { [weak self] _ in
+                guard let self else {
+                    return
+                }
+                let enabled = !AlfaSettings.ghostMode
+                AlfaSettings.setGhostMode(enabled)
+                let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
+                self.alfaGhostButton = self.alfaMakeGhostButton(presentationData: presentationData)
+                self.parentController?.requestLayout(transition: .animated(duration: 0.25, curve: .easeInOut))
+                let text = enabled ? AlfaCyrillic.ui("Ghost rejim yoqildi: onlayn, «yozyapti» va «o'qildi» yashirin") : AlfaCyrillic.ui("Ghost rejim o'chirildi")
+                self.parentController?.present(UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: text, timeout: 2.5, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: true, action: { _ in return false }), in: .current)
+            }
+        )
+    }
+
     private func updateChatList(
         networkState: AccountNetworkState,
         proxy: (Bool, Bool),
@@ -7321,6 +7349,7 @@ private final class ChatListLocationContext {
             if case .chatList(.root) = self.location {
                 self.rightButton = nil
                 self.storyButton = nil
+                self.alfaGhostButton = nil
                 self.proxyButton = nil
             }
             let title = !stateAndFilterId.state.selectedPeerIds.isEmpty ? presentationData.strings.ChatList_SelectedChats(Int32(stateAndFilterId.state.selectedPeerIds.count)) : defaultTitle
@@ -7337,6 +7366,7 @@ private final class ChatListLocationContext {
             if case .chatList(.root) = self.location {
                 self.rightButton = nil
                 self.storyButton = nil
+                self.alfaGhostButton = nil
                 self.proxyButton = nil
             }
             self.leftButton = NavigationBarComponent.Button(id: "done",
@@ -7410,6 +7440,12 @@ private final class ChatListLocationContext {
                     }
                 }
                 
+                if isRoot {
+                    self.alfaGhostButton = self.alfaMakeGhostButton(presentationData: presentationData)
+                } else {
+                    self.alfaGhostButton = nil
+                }
+
                 if storyPostingAvailable {
                     self.storyButton = NavigationBarComponent.Button(id: "story",
                         content: .icon(imageName: "Chat List/AddStoryIcon"),

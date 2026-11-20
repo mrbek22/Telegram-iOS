@@ -1608,6 +1608,8 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                         var badge: HorizontalTabsComponent.Tab.Badge?
                         var accessibilityValue: String?
                         var isMainTab = false
+                        // AlfaGram: a local automatic tab shows a monochrome icon instead of its emoji title.
+                        var alfaSymbolName: String?
                         switch entry {
                         case .all:
                             id = Int32.min
@@ -1615,6 +1617,7 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                             isMainTab = true
                         case let .filter(idValue, text, unread):
                             id = AnyHashable(idValue)
+                            alfaSymbolName = AlfaLocalTabs.symbolName(idValue)
                             title = HorizontalTabsComponent.Tab.Title(text: text.text, entities: text.entities, enableAnimations: text.enableAnimations)
                             if unread.value != 0 {
                                 badge = HorizontalTabsComponent.Tab.Badge(
@@ -1625,9 +1628,16 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
                             }
                         }
                         
+                        let tabContent: HorizontalTabsComponent.Tab.Content
+                        if let alfaSymbolName, let alfaIcon = UIImage(systemName: alfaSymbolName, withConfiguration: UIImage.SymbolConfiguration(pointSize: 17.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate) {
+                            tabContent = .custom(AnyComponent(Image(image: alfaIcon, tintColor: self.presentationData.theme.chat.inputPanel.panelControlColor, size: CGSize(width: 24.0, height: 22.0), contentMode: .center)))
+                        } else {
+                            tabContent = .title(title)
+                        }
+
                         return HorizontalTabsComponent.Tab(
                             id: id,
-                            content: .title(title),
+                            content: tabContent,
                             badge: badge,
                             action: { [weak self] in
                                 guard let self, let tabContainerData = self.controller?.tabContainerData else {

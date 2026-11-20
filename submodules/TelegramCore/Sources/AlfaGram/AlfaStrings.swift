@@ -117,8 +117,18 @@ public enum AlfaStrings {
 
         // Settings / profile entries
         "Mening AlfaGram havolam": ("My AlfaGram link", "Моя ссылка AlfaGram"),
+        "Havolani nusxalash": ("Copy link", "Копировать ссылку"),
+        "Ulashish": ("Share", "Поделиться"),
+        "Kartochka sifatida ulashish": ("Share as a card", "Поделиться карточкой"),
+        "QR'ni rasmlarga saqlash": ("Save QR to Photos", "Сохранить QR в Фото"),
+        "Shaxsiy havola uchun avval username qo'ying.": ("Set a username first to get your personal link.", "Чтобы получить личную ссылку, сначала задайте имя пользователя."),
+        "Username qo'yish": ("Set username", "Задать имя пользователя"),
+        "Havola nusxalandi": ("Link copied", "Ссылка скопирована"),
+        "Ghost rejim yoqildi: onlayn, «yozyapti» va «o'qildi» yashirin": ("Ghost mode on: online, «typing» and «read» are hidden", "Режим призрака включён: «в сети», «печатает» и «прочитано» скрыты"),
+        "Ghost rejim o'chirildi": ("Ghost mode off", "Режим призрака выключен"),
+        "Rasmlarga saqlandi": ("Saved to Photos", "Сохранено в Фото"),
         "Yordam guruhi": ("Help group", "Группа поддержки"),
-        "Ro'yxatdan o'tgan (taxminan)": ("Registered (approx.)", "Регистрация (примерно)"),
+        "Ro'yxatdan o'tgan": ("Registered", "Регистрация"),
 
         // Chat list tabs
         "Hammasi": ("All", "Все"),

@@ -350,6 +350,8 @@ typedef enum {
         _glkView.delegate = self;
         
         [self setupGL];
+        // AlfaGram: the AlfaGram logo covers Telegram's animated sphere (it moves with the GL view).
+        [_glkView addSubview:[self alfaLogoCoverWithSize:CGSizeMake(size, size)]];
         [self.view addSubview:_glkView];
         
         [self startTimer];
@@ -445,11 +447,25 @@ typedef enum {
     [_wrapperView addSubview:_pageControl];
 }
 
+- (UIView *)alfaLogoCoverWithSize:(CGSize)size {
+    UIView *cover = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, size.width, size.height)];
+    cover.backgroundColor = _backgroundColor;
+    cover.userInteractionEnabled = false;
+    cover.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    CGFloat logoSize = MIN(size.width, size.height) * 0.72;
+    UIImageView *logo = [[UIImageView alloc] initWithFrame:CGRectMake((size.width - logoSize) / 2.0, (size.height - logoSize) / 2.0, logoSize, logoSize)];
+    logo.image = [UIImage imageNamed:@"AlfaLaunchLogo"];
+    logo.contentMode = UIViewContentModeScaleAspectFit;
+    logo.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    [cover addSubview:logo];
+    return cover;
+}
+
 - (UIView *)createAnimationSnapshot {
-    UIImage *image = _glkView.snapshot;
-    UIImageView *imageView = [[UIImageView alloc] initWithFrame:_glkView.frame];
-    imageView.image = image;
-    return imageView;
+    // AlfaGram: the logo, not the GL sphere underneath it.
+    UIView *snapshot = [self alfaLogoCoverWithSize:_glkView.bounds.size];
+    snapshot.frame = _glkView.frame;
+    return snapshot;
 }
 
 - (UIView *)createTextSnapshot {
