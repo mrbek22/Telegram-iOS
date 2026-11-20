@@ -340,7 +340,7 @@ private final class ItemNode: ASDisplayNode {
     
     func alfaUpdateIcon(_ name: String?, color: UIColor) {
         let textNodes: [ImmediateTextNodeWithEntities] = [self.titleNode, self.titleActiveNode, self.shortTitleNode, self.shortTitleActiveNode]
-        if let name {
+        if name != nil {
             // The title text only reserves the icon's width; the icon is drawn on top.
             let placeholder = "\u{2003}\u{2002}"
             for node in textNodes {
