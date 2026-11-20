@@ -44,12 +44,14 @@ public enum AlfaSettings {
         case roundVideoBackCamera
         /// View-once and self-destructing photos, videos, voice and round messages stay in the chat after viewing.
         case keepSelfDestructing
+        /// A call (voice or video) asks «Call?» first, against accidental taps.
+        case confirmCalls
 
         public var defaultValue: Bool {
             switch self {
             case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave, .stealthStories:
                 return true
-            case .roundVideoAsk, .keepSelfDestructing:
+            case .roundVideoAsk, .keepSelfDestructing, .confirmCalls:
                 return true
             case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend, .roundVideoBackCamera:
                 return false
@@ -166,6 +168,10 @@ public enum AlfaSettings {
 
     public static var keepSelfDestructing: Bool {
         return value(.keepSelfDestructing)
+    }
+
+    public static var confirmCalls: Bool {
+        return value(.confirmCalls)
     }
 
     public static var unrestrictedSave: Bool {

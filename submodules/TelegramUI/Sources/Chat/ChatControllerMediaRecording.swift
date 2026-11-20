@@ -170,6 +170,10 @@ extension ChatControllerImpl {
                 }),
                 ActionSheetButtonItem(title: AlfaCyrillic.ui("Orqa kamera"), color: .accent, action: {
                     start(true)
+                }),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Galereyadan video"), color: .accent, action: { [weak self, weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                    self?.alfaPickGalleryRoundVideo()
                 })
             ]),
             ActionSheetItemGroup(items: [

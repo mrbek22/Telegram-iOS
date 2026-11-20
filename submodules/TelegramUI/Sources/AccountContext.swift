@@ -1009,6 +1009,26 @@ public final class AccountContextImpl: AccountContext {
     }
     
     public func requestCall(peerId: EnginePeer.Id, isVideo: Bool, completion: @escaping () -> Void) {
+        // AlfaGram: «Call?» first, so a stray tap doesn't ring anyone.
+        if !AlfaSettings.confirmCalls {
+            self.alfaPerformRequestCall(peerId: peerId, isVideo: isVideo, completion: completion)
+            return
+        }
+        let _ = (self.engine.data.get(TelegramEngine.EngineData.Item.Peer.Peer(id: peerId))
+        |> deliverOnMainQueue).start(next: { [weak self] peer in
+            guard let self else {
+                return
+            }
+            let presentationData = self.sharedContext.currentPresentationData.with { $0 }
+            let title = isVideo ? AlfaCyrillic.ui("Video qo'ng'iroq qilinsinmi?") : AlfaCyrillic.ui("Qo'ng'iroq qilinsinmi?")
+            let name = peer?.compactDisplayTitle ?? ""
+            self.sharedContext.mainWindow?.present(textAlertController(context: self, title: title, text: name, actions: [TextAlertAction(type: .genericAction, title: presentationData.strings.Common_Cancel, action: {}), TextAlertAction(type: .defaultAction, title: AlfaCyrillic.ui("Qo'ng'iroq qilish"), action: { [weak self] in
+                self?.alfaPerformRequestCall(peerId: peerId, isVideo: isVideo, completion: completion)
+            })]), on: .root)
+        })
+    }
+
+    private func alfaPerformRequestCall(peerId: EnginePeer.Id, isVideo: Bool, completion: @escaping () -> Void) {
         guard let callResult = self.sharedContext.callManager?.requestCall(context: self, peerId: peerId, isVideo: isVideo, endCurrentIfAny: false) else {
             return
         }

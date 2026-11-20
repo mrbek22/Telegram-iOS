@@ -356,7 +356,7 @@ final class StoryItemContentComponent: Component {
                             useLargeThumbnail: false,
                             autoFetchFullSizeThumbnail: false,
                             tempFilePath: nil,
-                            captureProtected: component.item.isForwardingDisabled,
+                            captureProtected: component.item.isForwardingDisabled && !AlfaSettings.unrestrictedSave,
                             hintDimensions: file.dimensions?.cgSize,
                             storeAfterDownload: nil,
                             displayImage: false,
@@ -776,7 +776,7 @@ final class StoryItemContentComponent: Component {
                 availableReactions: component.availableReactions,
                 entityFiles: component.entityFiles,
                 size: size,
-                isCaptureProtected: component.item.isForwardingDisabled,
+                isCaptureProtected: component.item.isForwardingDisabled && !AlfaSettings.unrestrictedSave,
                 attemptSynchronous: synchronousLoad,
                 isActive: self.progressMode.mode == .play,
                 transition: transition
@@ -971,7 +971,7 @@ final class StoryItemContentComponent: Component {
                         storyId: component.item.id,
                         media: messageMedia,
                         size: availableSize,
-                        isCaptureProtected: component.item.isForwardingDisabled,
+                        isCaptureProtected: component.item.isForwardingDisabled && !AlfaSettings.unrestrictedSave,
                         attemptSynchronous: synchronousLoad,
                         transition: transition
                     )
@@ -1150,7 +1150,7 @@ final class StoryItemContentComponent: Component {
                         storyId: component.item.id,
                         media: messageMedia,
                         size: availableSize,
-                        isCaptureProtected: component.item.isForwardingDisabled,
+                        isCaptureProtected: component.item.isForwardingDisabled && !AlfaSettings.unrestrictedSave,
                         attemptSynchronous: synchronousLoad,
                         transition: transition
                     )

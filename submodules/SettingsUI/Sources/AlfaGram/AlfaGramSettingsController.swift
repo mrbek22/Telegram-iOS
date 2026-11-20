@@ -145,6 +145,7 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), ui("Chatlar ro'yxati tepasidagi story qatori"), "circle.dashed", 0xaf52de, AlfaSettings.hideStories))
     entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), ui("Xabarlaringiz qabul qiluvchida tovushsiz keladi"), "bell.slash.fill", 0x5856d6, AlfaSettings.silentSend))
     entries.append(.choice(8, next(), .roundVideoCamera, ui("Dumaloq video kamerasi"), alfaRoundVideoCameraLabel(), "video.circle.fill", 0xff9500))
+    entries.append(.toggle(8, next(), .confirmCalls, ui("Qo'ng'iroqdan oldin so'rash"), ui("Tasodifan bosib, qo'ng'iroq qilib yubormaysiz"), "phone.fill", 0x34c759, AlfaSettings.confirmCalls))
 
     entries.append(.header(9, next(), ui("MAXFIYLIK")))
     entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar"), "person.crop.circle.badge.xmark", 0x007aff))

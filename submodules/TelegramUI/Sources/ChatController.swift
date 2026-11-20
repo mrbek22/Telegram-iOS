@@ -620,6 +620,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var avatarNode: ChatAvatarNavigationNode?
     /// AlfaGram: the avatar menu was opened by a tap — show it as a plain menu, without the large photo preview.
     var alfaAvatarMenuFromTap = false
+    /// AlfaGram: keeps the photo-library picker's delegate alive while it is open.
+    var alfaRoundVideoPickerDelegate: AnyObject?
     
     var performTextSelectionAction: ((Message?, Bool, NSAttributedString, [MessageTextEntity]?, TextSelectionAction) -> Void)?
     var performOpenURL: ((Message?, String, Promise<Bool>?) -> Void)?
