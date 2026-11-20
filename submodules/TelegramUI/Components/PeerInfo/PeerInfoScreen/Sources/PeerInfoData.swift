@@ -628,8 +628,10 @@ private func peerInfoAvailableMediaPanes(context: AccountContext, peerId: Engine
     var tags: [(EngineMessage.Tags, PeerInfoPaneKey)] = []
     
     if !isMyProfile {
+        // AlfaGram: photos and videos as separate tabs.
         tags = [
-            (.photoOrVideo, .media),
+            (.photo, .media),
+            (.video, .alfaVideos),
             (.file, .files),
             (.music, .music),
             (.voiceOrInstantVideo, .voice),

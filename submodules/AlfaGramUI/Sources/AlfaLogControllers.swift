@@ -340,12 +340,27 @@ public func alfaOnlineSessionsController(context: AccountContext, peer: EnginePe
 
 // MARK: - Typed but did not send
 
-public func alfaTypingLogController(context: AccountContext) -> ViewController {
+/// AlfaGram: «Typed, didn't send» — everyone, or only `onlyPeerId` (from that person's profile).
+public func alfaTypingLogController(context: AccountContext, onlyPeerId: EnginePeer.Id? = nil) -> ViewController {
     let accountPeerId = context.account.peerId
+    let unsent: () -> [AlfaTypingLog.Entry] = {
+        let all = AlfaTypingLog.unsent(accountPeerId: accountPeerId)
+        if let onlyPeerId {
+            return all.filter { $0.peerId == onlyPeerId }
+        }
+        return all
+    }
+    // Clearing from one person's profile would wipe everyone's records, so it is offered on the full list only.
+    var clear: (() -> Void)?
+    if onlyPeerId == nil {
+        clear = {
+            AlfaTypingLog.clear(accountPeerId: accountPeerId)
+        }
+    }
     return alfaLogController(context: context, title: alfaUi("Yozdi, yubormadi"), peerIds: {
-        return Array(Set(AlfaTypingLog.unsent(accountPeerId: accountPeerId).map { $0.peerId }))
+        return Array(Set(unsent().map { $0.peerId }))
     }, build: { presentationData, peers in
-        let entries = AlfaTypingLog.unsent(accountPeerId: accountPeerId)
+        let entries = unsent()
         var result: [AlfaLogEntry] = []
         if entries.isEmpty {
             result.append(.info(0, 0, alfaUi("Hozircha yozuv yo'q. Kimdir shaxsiy chatda sizga yozishni boshlab, keyin yubormasa, shu yerda ko'rinadi.")))
@@ -369,7 +384,5 @@ public func alfaTypingLogController(context: AccountContext) -> ViewController {
             result.append(.row(section, id, peer, alfaPeerName(peer, entry.peerId, presentationData), time, AlfaCyrillic.ui(AlfaStrings.f("Yozdi ({0} soniya), lekin yubormadi", "\(seconds)")), false))
         }
         return result
-    }, clear: {
-        AlfaTypingLog.clear(accountPeerId: accountPeerId)
-    })
+    }, clear: clear)
 }

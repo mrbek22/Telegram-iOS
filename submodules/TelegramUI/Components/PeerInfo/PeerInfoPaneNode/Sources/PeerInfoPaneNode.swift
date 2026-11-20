@@ -23,6 +23,8 @@ public enum PeerInfoPaneKey: Int32 {
     case similarChannels
     case similarBots
     case storyArchive
+    /// AlfaGram: videos in their own tab (the «Media» tab shows photos only).
+    case alfaVideos
     
     public init(tab: TelegramProfileTab) {
         switch tab {

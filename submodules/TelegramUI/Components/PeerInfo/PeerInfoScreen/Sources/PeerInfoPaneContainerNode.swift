@@ -515,12 +515,14 @@ private final class PeerInfoPendingPane {
             visualPaneNode.emptyAction = {
                 openAddStory()
             }
-        case .media:
+        case .media, .alfaVideos:
+            // AlfaGram: «Photos» (.media) and «Videos» (.alfaVideos) are separate tabs.
+            let alfaContentType: PeerInfoVisualMediaPaneNode.ContentType = key == .alfaVideos ? .video : .photo
             let visualPaneNode: PeerInfoVisualMediaPane
             if context.usesSharedMediaGridV2 {
-                visualPaneNode = PeerInfoMediaGridPaneNode(context: context, chatControllerInteraction: chatControllerInteraction, peerId: chatLocationPeerId, chatLocation: chatLocation, chatLocationContextHolder: chatLocationContextHolder, contentType: .photoOrVideo, captureProtected: captureProtected, initialFocusMessageIndex: switchToMediaTarget?.kind == .photoVideo ? switchToMediaTarget?.messageIndex : nil)
+                visualPaneNode = PeerInfoMediaGridPaneNode(context: context, chatControllerInteraction: chatControllerInteraction, peerId: chatLocationPeerId, chatLocation: chatLocation, chatLocationContextHolder: chatLocationContextHolder, contentType: alfaContentType, captureProtected: captureProtected, initialFocusMessageIndex: switchToMediaTarget?.kind == .photoVideo ? switchToMediaTarget?.messageIndex : nil)
             } else {
-                visualPaneNode = PeerInfoVisualMediaPaneNode(context: context, chatControllerInteraction: chatControllerInteraction, peerId: chatLocationPeerId, chatLocation: chatLocation, chatLocationContextHolder: chatLocationContextHolder, contentType: .photoOrVideo, captureProtected: captureProtected, initialFocusMessageIndex: switchToMediaTarget?.kind == .photoVideo ? switchToMediaTarget?.messageIndex : nil)
+                visualPaneNode = PeerInfoVisualMediaPaneNode(context: context, chatControllerInteraction: chatControllerInteraction, peerId: chatLocationPeerId, chatLocation: chatLocation, chatLocationContextHolder: chatLocationContextHolder, contentType: alfaContentType, captureProtected: captureProtected, initialFocusMessageIndex: switchToMediaTarget?.kind == .photoVideo ? switchToMediaTarget?.messageIndex : nil)
             }
             paneNode = visualPaneNode
             // VoiceOver: the legacy grid scrolls the profile to the focused tile; the MediaGrid pane has no such hook.
@@ -1311,8 +1313,10 @@ final class PeerInfoPaneContainerNode: ASDisplayNode, ASGestureRecognizerDelegat
                     case .botPreview:
                         content = .title(HorizontalTabsComponent.Tab.Title(text: presentationData.strings.PeerInfo_PaneBotPreviews, entities: [], enableAnimations: false))
                     case .media:
-                        content = .title(HorizontalTabsComponent.Tab.Title(text: presentationData.strings.PeerInfo_PaneMedia, entities: [], enableAnimations: false))
+                        content = .title(HorizontalTabsComponent.Tab.Title(text: AlfaCyrillic.ui("Rasmlar"), entities: [], enableAnimations: false))
                         canReorder = self.peerId.namespace == Namespaces.Peer.CloudChannel
+                    case .alfaVideos:
+                        content = .title(HorizontalTabsComponent.Tab.Title(text: AlfaCyrillic.ui("Videolar"), entities: [], enableAnimations: false))
                     case .files:
                         content = .title(HorizontalTabsComponent.Tab.Title(text: presentationData.strings.PeerInfo_PaneFiles, entities: [], enableAnimations: false))
                         canReorder = self.peerId.namespace == Namespaces.Peer.CloudChannel

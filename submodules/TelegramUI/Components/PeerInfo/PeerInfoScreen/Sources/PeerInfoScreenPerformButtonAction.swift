@@ -588,6 +588,19 @@ extension PeerInfoScreenNode {
                             self.controller?.push(alfaOnlineSessionsController(context: self.context, peer: peer))
                         })))
                     }
+
+                    // AlfaGram: «Typed, didn't send» for this person only.
+                    if AlfaSettings.typingLog && strongSelf.peerId.namespace == Namespaces.Peer.CloudUser && user.botInfo == nil && !user.isDeleted && strongSelf.peerId != strongSelf.context.account.peerId {
+                        items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Yozdi, yubormadi"), icon: { theme in
+                            generateTintedImage(image: UIImage(systemName: "text.bubble", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .regular)), color: theme.contextMenu.primaryColor)
+                        }, action: { [weak self] _, f in
+                            f(.dismissWithoutContent)
+                            guard let self else {
+                                return
+                            }
+                            self.controller?.push(alfaTypingLogController(context: self.context, onlyPeerId: self.peerId))
+                        })))
+                    }
                     
                     if user.botInfo == nil && data.isContact, case let .user(peer) = strongSelf.data?.peer, let phone = peer.phone {
                         items.append(.action(ContextMenuActionItem(text: presentationData.strings.Profile_ShareContactButton, icon: { theme in
