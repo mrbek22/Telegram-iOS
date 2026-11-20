@@ -131,7 +131,7 @@ public class ContactsController: ViewController {
     }
 
     /// AlfaGram: the screen is also a root tab (Calls · Contacts · Chats · Settings).
-    private var alfaIsTab = false
+    private(set) var alfaIsTab = false
 
     public func alfaConfigureAsTab() {
         self.alfaIsTab = true

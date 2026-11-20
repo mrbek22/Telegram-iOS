@@ -314,8 +314,9 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         if let selectionState = self.contactListNode.selectionState {
             title = self.presentationData.strings.Contacts_SelectedContacts(Int32(selectionState.selectedPeerIndices.count))
+            // AlfaGram: leaving the selection is "Cancel" (the selection is dropped, nothing is deleted).
             leftButton = NavigationBarComponent.Button(id: "done",
-                content: .text(title: self.presentationData.strings.Common_Done, isBold: true),
+                content: .text(title: self.presentationData.strings.Common_Cancel, isBold: false),
                 action: { [weak self] sourceView in
                     guard let self else {
                         return
@@ -353,9 +354,13 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
             rightButtons = [sortButton, addButton]
         }
         
-        // Pushed (from Settings) the header has a back button.
-        let backPressed: (() -> Void)? = { [weak self] in
-            self?.controller?.navigationController?.popViewController(animated: true)
+        // Pushed (from Settings) the header has a back button. AlfaGram: as a root tab it has none — popping the
+        // tab's own screen left a black screen.
+        var backPressed: (() -> Void)?
+        if !(self.controller?.alfaIsTab ?? false) {
+            backPressed = { [weak self] in
+                self?.controller?.navigationController?.popViewController(animated: true)
+            }
         }
         let primaryContent = ChatListHeaderComponent.Content(
             title: self.presentationData.strings.Contacts_Title,
