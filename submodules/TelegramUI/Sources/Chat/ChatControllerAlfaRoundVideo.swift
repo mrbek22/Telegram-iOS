@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 import Display
 import SwiftSignalKit
 import TelegramCore
+import TelegramPresentationData
+import PresentationDataUtils
 import AccountContext
 import OverlayStatusController
 
