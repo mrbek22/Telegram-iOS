@@ -19,6 +19,8 @@ enum SettingsSection: Int, CaseIterable {
     case phone
     case accounts
     case myProfile
+    /// AlfaGram: its settings and «My AlfaGram link», as their own block right under «My Profile».
+    case alfaGram
     case wallet
     case proxy
     case apps
@@ -259,9 +261,12 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     } else {
         notificationsWarning = false
     }
-    // AlfaGram: its own settings, first in this section.
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 7, text: "AlfaGram", icon: PresentationResourcesSettings.aiTools, action: {
+    // AlfaGram: its own block, high up (under «My Profile»).
+    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 7, text: "AlfaGram", icon: PresentationResourcesSettings.aiTools, action: {
         interaction.openSettings(.alfaGram)
+    }))
+    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 9, text: AlfaCyrillic.ui("Mening AlfaGram havolam"), icon: PresentationResourcesSettings.myProfile, action: {
+        interaction.openSettings(.alfaLink)
     }))
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 0, label: notificationsWarning ? .badge("!", presentationData.theme.list.itemDestructiveColor) : .none, text: presentationData.strings.Settings_NotificationsAndSounds, icon: PresentationResourcesSettings.notifications, labelAccessibilityText: notificationsWarning ? presentationData.strings.VoiceOver_TabBar_AttentionRequired : nil, action: {
         interaction.openSettings(.notificationsAndSounds)
@@ -283,10 +288,6 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
     let languageName = presentationData.strings.primaryComponent.localizedName
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 4, label: .text(languageName.isEmpty ? presentationData.strings.Localization_LanguageName : languageName), text: presentationData.strings.Settings_AppLanguage, icon: PresentationResourcesSettings.language, action: {
         interaction.openSettings(.language)
-    }))
-    // AlfaGram: shaxsiy havola (alfagram.uz/username) — ulashish
-    items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 9, text: AlfaCyrillic.ui("Mening AlfaGram havolam"), icon: PresentationResourcesSettings.myProfile, action: {
-        interaction.openSettings(.alfaLink)
     }))
     // AlfaGram: rasmiy yordam guruhi
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 8, text: AlfaCyrillic.ui("Yordam guruhi"), icon: PresentationResourcesSettings.support, action: {
