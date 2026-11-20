@@ -2,6 +2,18 @@ import Foundation
 import Postbox
 import SwiftSignalKit
 
+/// The App Group's defaults ("group.<app bundle id>"), shared by the app and its extensions
+/// (the notification service reads the locked chats and hidden accounts from here).
+enum AlfaSharedDefaults {
+    static let value: UserDefaults = {
+        var bundleId = Bundle.main.bundleIdentifier ?? ""
+        if Bundle.main.bundlePath.hasSuffix(".appex"), let lastDot = bundleId.range(of: ".", options: .backwards) {
+            bundleId = String(bundleId[..<lastDot.lowerBound])
+        }
+        return UserDefaults(suiteName: "group." + bundleId) ?? UserDefaults.standard
+    }()
+}
+
 /// AlfaGram: chats locked behind Face ID / Touch ID / the device passcode.
 /// A locked chat opens only after authentication and stays open until the app goes to the background.
 /// Kept in the app's standard `UserDefaults`, as "<account peer id>:<chat peer id>" strings.
@@ -13,8 +25,13 @@ public enum AlfaChatLock {
         return "\(accountPeerId.toInt64()):\(peerId.toInt64())"
     }
 
+    /// The locked list is shared with the extensions; "unlocked for now" stays in the app.
+    private static func defaults(_ key: String) -> UserDefaults {
+        return key == lockedKey ? AlfaSharedDefaults.value : UserDefaults.standard
+    }
+
     private static func list(_ key: String) -> [String] {
-        return UserDefaults.standard.stringArray(forKey: key) ?? []
+        return defaults(key).stringArray(forKey: key) ?? []
     }
 
     public static func isLocked(accountPeerId: PeerId, peerId: PeerId) -> Bool {
@@ -33,7 +50,7 @@ public enum AlfaChatLock {
         if locked {
             items.append(value)
         }
-        UserDefaults.standard.set(items, forKey: lockedKey)
+        AlfaSharedDefaults.value.set(items, forKey: lockedKey)
         UserDefaults.standard.set(list(unlockedKey).filter { $0 != value }, forKey: unlockedKey)
         NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": "chatLock"])
     }
@@ -59,7 +76,7 @@ public enum AlfaHiddenAccounts {
     private static let key = "alfa_hidden_accounts"
 
     public static func ids() -> Set<Int64> {
-        let values = UserDefaults.standard.array(forKey: key) as? [NSNumber] ?? []
+        let values = AlfaSharedDefaults.value.array(forKey: key) as? [NSNumber] ?? []
         return Set(values.map { $0.int64Value })
     }
 
@@ -74,7 +91,7 @@ public enum AlfaHiddenAccounts {
         } else {
             values.remove(accountPeerId.toInt64())
         }
-        UserDefaults.standard.set(values.map { NSNumber(value: $0) }, forKey: key)
+        AlfaSharedDefaults.value.set(values.map { NSNumber(value: $0) }, forKey: key)
         NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": "hiddenAccounts"])
     }
 

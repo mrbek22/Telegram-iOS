@@ -410,6 +410,11 @@ final class AuthorizedApplicationContext {
                             if chatIsVisible {
                                 return
                             }
+
+                            // AlfaGram: no in-app banner (with the message text) for a locked chat.
+                            if AlfaChatLock.isLocked(accountPeerId: strongSelf.context.account.peerId, peerId: firstMessage.id.peerId) {
+                                return
+                            }
                             
                             if firstMessage.restrictionReason(platform: "ios", contentSettings: strongSelf.context.currentContentSettings.with { $0 }) != nil {
                                 return

@@ -532,7 +532,38 @@ private struct NotificationContent: CustomStringConvertible {
     var senderImage: INImage?
     
     var isLockedMessage: String?
-    
+
+    /// AlfaGram: "new message" in the app's language, shown instead of a locked chat's text.
+    var alfaLockedText: String?
+    /// AlfaGram: the locked-chat / hidden-account check was already applied.
+    var alfaChecked = false
+
+    /// AlfaGram: a hidden account's notification is not shown at all; a locked chat's shows only
+    /// "AlfaGram — new message" (no sender, text, picture or Siri suggestion).
+    private func alfaFiltered() -> NotificationContent? {
+        guard let peerIdString = self.userInfo["peerId"] as? String, let peerIdValue = Int64(peerIdString), let accountString = self.userInfo["alfaAccountPeerId"] as? String, let accountValue = Int64(accountString) else {
+            return nil
+        }
+        let accountPeerId = PeerId(accountValue)
+        if AlfaHiddenAccounts.isHidden(accountPeerId: accountPeerId) {
+            var hidden = NotificationContent(isLockedMessage: nil)
+            hidden.alfaChecked = true
+            return hidden
+        }
+        if AlfaChatLock.isLocked(accountPeerId: accountPeerId, peerId: PeerId(peerIdValue)) {
+            var locked = self
+            locked.alfaChecked = true
+            locked.title = "AlfaGram"
+            locked.subtitle = nil
+            locked.sender = nil
+            locked.senderImage = nil
+            locked.attachments = []
+            locked.isLockedMessage = self.alfaLockedText ?? "You have a new message"
+            return locked
+        }
+        return nil
+    }
+
     init(isLockedMessage: String?) {
         self.isLockedMessage = isLockedMessage
     }
@@ -612,6 +643,10 @@ private struct NotificationContent: CustomStringConvertible {
     }
 
     func generate() -> UNNotificationContent {
+        if !self.alfaChecked, let filtered = self.alfaFiltered() {
+            return filtered.generate()
+        }
+
         var content = UNMutableNotificationContent()
         
         //Logger.shared.log("NotificationService", "Generating final content: \(self.description)")
@@ -865,6 +900,14 @@ private final class NotificationServiceHandler {
             isLockedStoryMessage = nil
         }
         
+        // AlfaGram: the text a locked chat's notification shows (Telegram's own localized "new message").
+        let alfaLockedMessage: String
+        if let notificationsPresentationData = try? Data(contentsOf: URL(fileURLWithPath: notificationsPresentationDataPath(rootPath: rootPath))), let notificationsPresentationDataValue = try? JSONDecoder().decode(NotificationsPresentationData.self, from: notificationsPresentationData) {
+            alfaLockedMessage = notificationsPresentationDataValue.applicationLockedMessageString
+        } else {
+            alfaLockedMessage = "You have a new message"
+        }
+
         let incomingCallMessage: String
         if let notificationsPresentationData = try? Data(contentsOf: URL(fileURLWithPath: notificationsPresentationDataPath(rootPath: rootPath))), let notificationsPresentationDataValue = try? JSONDecoder().decode(NotificationsPresentationData.self, from: notificationsPresentationData) {
             incomingCallMessage = notificationsPresentationDataValue.incomingCallString
@@ -1286,6 +1329,8 @@ private final class NotificationServiceHandler {
 
                             content.userInfo["peerId"] = "\(peerId.toInt64())"
                             content.userInfo["accountId"] = "\(recordId.int64)"
+                            content.userInfo["alfaAccountPeerId"] = "\(accountPeerId.toInt64())"
+                            content.alfaLockedText = alfaLockedMessage
                             
                             if let silentString = payloadJson["silent"] as? String {
                                 if let silentValue = Int(silentString), silentValue != 0 {
