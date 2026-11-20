@@ -53,6 +53,11 @@ public final class ChatAvatarNavigationNode: ASDisplayNode {
     }
     
     public var contextAction: ((ASDisplayNode, ContextGesture?) -> Void)?
+
+    /// AlfaGram: opens the avatar's menu from a plain tap.
+    public func alfaOpenContextMenu() {
+        self.contextAction?(self.containerNode, nil)
+    }
     public var contextActionIsEnabled: Bool = false {
         didSet {
             if self.contextActionIsEnabled != oldValue {

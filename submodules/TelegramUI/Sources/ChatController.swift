@@ -618,6 +618,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
     var powerSavingMonitoringDisposable: Disposable?
     
     var avatarNode: ChatAvatarNavigationNode?
+    /// AlfaGram: the avatar menu was opened by a tap — show it as a plain menu, without the large photo preview.
+    var alfaAvatarMenuFromTap = false
     
     var performTextSelectionAction: ((Message?, Bool, NSAttributedString, [MessageTextEntity]?, TextSelectionAction) -> Void)?
     var performOpenURL: ((Message?, String, Promise<Bool>?) -> Void)?
@@ -6222,7 +6224,14 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                             f(.dismissWithoutContent)
                             self?.interfaceInteraction?.beginMessageSearch(.everything, "")
                         })))
-                                                
+                        // AlfaGram: export the chat (HTML or text).
+                        items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Chatni eksport qilish"), icon: { theme in
+                            return generateTintedImage(image: UIImage(systemName: "square.and.arrow.up", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .regular)), color: theme.actionSheet.primaryTextColor)
+                        }, action: { _, f in
+                            f(.dismissWithoutContent)
+                            self?.alfaExportChat()
+                        })))
+
                         return items
                     }
                 case let .replyThread(message):
@@ -6502,7 +6511,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 strongSelf.canReadHistory.set(false)
                 
                 let source: ContextContentSource
-                if let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer, peer.smallProfileImage != nil {
+                let alfaFromTap = strongSelf.alfaAvatarMenuFromTap
+                strongSelf.alfaAvatarMenuFromTap = false
+                if !alfaFromTap, let peer = strongSelf.presentationInterfaceState.renderedPeer?.chatMainPeer, peer.smallProfileImage != nil {
                     let galleryController = AvatarGalleryController(context: strongSelf.context, peer: EnginePeer(peer), remoteEntries: nil, replaceRootController: { controller, ready in
                     }, synchronousLoad: true)
                     galleryController.setHintWillBePresentedInPreviewingContext(true)
@@ -8740,6 +8751,9 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 self.navigationButtonAction(button.action)
             } else if case let .peer(peerId) = self.chatLocation, case .openChatInfo(expandAvatar: true, _) = button.action, let storyStats = self.contentData?.state.storyStats, storyStats.unseenCount != 0, let avatarNode = self.avatarNode {
                 self.openStories(peerId: peerId, avatarHeaderNode: nil, avatarNode: avatarNode.avatarNode)
+            } else if case .openChatInfo = button.action, case .peer = self.chatLocation, let avatarNode = self.avatarNode, avatarNode.contextActionIsEnabled {
+                self.alfaAvatarMenuFromTap = true
+                avatarNode.alfaOpenContextMenu()
             } else {
                 if case .openChatInfo = button.action {
                     self.openChatInfoFromHeader = true
