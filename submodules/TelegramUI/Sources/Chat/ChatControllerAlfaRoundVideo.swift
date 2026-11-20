@@ -6,7 +6,6 @@ import UniformTypeIdentifiers
 import Display
 import SwiftSignalKit
 import TelegramCore
-import Postbox
 import AccountContext
 import OverlayStatusController
 
