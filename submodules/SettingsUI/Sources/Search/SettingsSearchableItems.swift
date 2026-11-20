@@ -4402,6 +4402,18 @@ func settingsSearchableItems(
             }
         ))
         
+        // AlfaGram: its settings — found by search, and opened by tg://settings/alfagram (the chat list "⋯" → Tools).
+        allItems.append(SettingsSearchableItem(
+            id: "alfagram",
+            title: "AlfaGram",
+            alternate: ["Ghost", AlfaCyrillic.ui("Asboblar")],
+            icon: .support,
+            breadcrumbs: [],
+            present: { context, _, present in
+                present(.push, alfaGramSettingsController(context: context))
+            }
+        ))
+
         let profileItems = profileSearchableItems(context: context, canAddAccount: canAddAccount)
         allItems.append(contentsOf: profileItems)
         

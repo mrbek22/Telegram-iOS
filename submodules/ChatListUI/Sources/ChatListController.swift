@@ -64,6 +64,8 @@ import GlobalControlPanelsContext
 import AlertComponent
 import AlertHeaderComponent
 import AvatarComponent
+import DeviceAccess
+import QrCodeUI
 
 /// AlfaGram: the long-press preview of a locked chat — a lock instead of the messages.
 private final class AlfaLockedChatPreviewController: ViewController {
@@ -445,11 +447,11 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         }
                     )
                     
-                    self.primaryContext?.rightButton = NavigationBarComponent.Button(id: "compose",
-                        content: .icon(imageName: "Chat List/ComposeIcon"),
-                        tint: .accent,
-                        action: { [weak self] _ in
-                            self?.composePressed()
+                    // AlfaGram: "⋯" instead of the compose button (New message is its first item).
+                    self.primaryContext?.rightButton = NavigationBarComponent.Button(id: "alfaMore",
+                        content: .more,
+                        action: { [weak self] sourceView in
+                            self?.alfaOpenMoreMenu(sourceView: sourceView)
                         }
                     )
                     
@@ -1010,6 +1012,77 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         }
     }
     
+    /// AlfaGram: the "⋯" menu at the top right of the chat list.
+    func alfaOpenMoreMenu(sourceView: UIView) {
+        let presentationData = self.presentationData
+        let ui = AlfaCyrillic.ui
+        func icon(_ name: String) -> (PresentationTheme) -> UIImage? {
+            return { theme in
+                return generateTintedImage(image: UIImage(systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .regular)), color: theme.contextMenu.primaryColor)
+            }
+        }
+
+        var items: [ContextMenuItem] = []
+        items.append(.action(ContextMenuActionItem(text: ui("Yangi xabar"), icon: icon("square.and.pencil"), action: { [weak self] _, f in
+            f(.default)
+            self?.composePressed()
+        })))
+        if self.isStoryPostingAvailable {
+            items.append(.action(ContextMenuActionItem(text: ui("Hikoya qo'shish"), icon: icon("plus.circle.dashed"), action: { [weak self] _, f in
+                f(.default)
+                self?.openStoryCamera(fromList: false, sourceView: sourceView)
+            })))
+        }
+        items.append(.action(ContextMenuActionItem(text: ui("QR kodni skanerlash"), icon: icon("qrcode.viewfinder"), action: { [weak self] _, f in
+            f(.default)
+            self?.alfaOpenQrScanner()
+        })))
+        items.append(.action(ContextMenuActionItem(text: ui("Asboblar"), icon: icon("gearshape"), action: { [weak self] _, f in
+            f(.default)
+            self?.alfaOpenInternalUrl("tg://settings/alfagram")
+        })))
+        items.append(.action(ContextMenuActionItem(text: ui("Ko'rinish"), icon: icon("paintbrush"), action: { [weak self] _, f in
+            f(.default)
+            self?.alfaOpenInternalUrl("tg://settings/themes")
+        })))
+        items.append(.action(ContextMenuActionItem(text: ui("Keshni tozalash"), icon: icon("cylinder.split.1x2"), action: { [weak self] _, f in
+            f(.default)
+            guard let self else {
+                return
+            }
+            (self.navigationController as? NavigationController)?.pushViewController(self.context.sharedContext.makeStorageManagementController(context: self.context))
+        })))
+        items.append(.action(ContextMenuActionItem(text: ui("Ro'yxatning oxiriga o'tish"), icon: icon("chevron.down"), action: { [weak self] _, f in
+            f(.default)
+            self?.chatListDisplayNode.effectiveContainerNode.currentItemNode.alfaScrollToBottom()
+        })))
+
+        let contextController = makeContextController(presentationData: presentationData, source: .reference(HeaderContextReferenceContentSource(controller: self, sourceView: sourceView)), items: .single(ContextController.Items(content: .list(items))), gesture: nil)
+        self.presentInGlobalOverlay(contextController)
+    }
+
+    private func alfaOpenInternalUrl(_ url: String) {
+        let context = self.context
+        context.sharedContext.openExternalUrl(context: context, urlContext: .generic, url: url, forceExternal: false, presentationData: context.sharedContext.currentPresentationData.with({ $0 }), navigationController: self.navigationController as? NavigationController, dismissInput: {})
+    }
+
+    private func alfaOpenQrScanner() {
+        let context = self.context
+        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        DeviceAccess.authorizeAccess(to: .camera(.qrCode), presentationData: presentationData, present: { c, a in
+            c.presentationArguments = a
+            context.sharedContext.mainWindow?.present(c, on: .root)
+        }, openSettings: {
+            context.sharedContext.applicationBindings.openSettings()
+        }, { [weak self] granted in
+            guard let self, granted else {
+                return
+            }
+            let controller = QrCodeScanScreen(context: self.context, subject: .peer)
+            (self.navigationController as? NavigationController)?.pushViewController(controller)
+        })
+    }
+
     /// AlfaGram: «All» in the selection mode.
     func alfaToggleSelectAllChats() {
         self.chatListDisplayNode.effectiveContainerNode.currentItemNode.alfaToggleSelectAll()
@@ -7486,11 +7559,11 @@ private final class ChatListLocationContext {
                         }
                     )
                 } else {
-                    self.rightButton = NavigationBarComponent.Button(id: "compose",
-                        content: .icon(imageName: "Chat List/ComposeIcon"),
-                        tint: .accent,
-                        action: { [weak self] _ in
-                            self?.parentController?.composePressed()
+                    // AlfaGram: "⋯" with New message, Add story, Scan QR, Tools, Appearance, Clear cache, End of list.
+                    self.rightButton = NavigationBarComponent.Button(id: "alfaMore",
+                        content: .more,
+                        action: { [weak self] sourceView in
+                            self?.parentController?.alfaOpenMoreMenu(sourceView: sourceView)
                         }
                     )
                 }

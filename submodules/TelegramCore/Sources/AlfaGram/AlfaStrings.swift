@@ -123,6 +123,13 @@ public enum AlfaStrings {
         "Chat qulflandi: ochish uchun Face ID yoki parol so'raladi": ("Chat locked: Face ID or the passcode is needed to open it", "Чат заблокирован: для открытия нужен Face ID или код"),
         "Media hali yuklanmagan": ("The media isn't downloaded yet", "Медиа ещё не загружено"),
         "Hammasini belgilash": ("Select all", "Выбрать все"),
+        "Yangi xabar": ("New message", "Новое сообщение"),
+        "Hikoya qo'shish": ("Add story", "Добавить историю"),
+        "QR kodni skanerlash": ("Scan QR code", "Сканировать QR-код"),
+        "Asboblar": ("Tools", "Инструменты"),
+        "Ko'rinish": ("Appearance", "Оформление"),
+        "Keshni tozalash": ("Clear cache", "Очистить кэш"),
+        "Ro'yxatning oxiriga o'tish": ("Go to the end of the list", "В конец списка"),
 
         // AlfaGram settings: one-line explanations under the switches
         "Suhbatdosh o'chirgan xabar sizda 🗑 belgisi bilan qoladi": ("A message the other person deletes stays with you, marked 🗑", "Удалённое собеседником сообщение останется у вас с отметкой 🗑"),

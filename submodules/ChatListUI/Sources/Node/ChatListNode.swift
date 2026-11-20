@@ -3832,6 +3832,12 @@ public final class ChatListNode: ListViewImpl {
         }
     }
     
+    /// AlfaGram: jumps to the end of the list (the oldest chat), loading it first if needed.
+    public func alfaScrollToBottom() {
+        let location: ChatListNodeLocation = .scroll(index: .chatList(.absoluteLowerBound), sourceIndex: .chatList(.absoluteUpperBound), scrollPosition: .bottom(0.0), animated: true, filter: self.chatListFilter)
+        self.setChatListLocation(location)
+    }
+
     private func setChatListLocation(_ location: ChatListNodeLocation) {
         self.currentLocation = location
         self.chatListLocation.set(location)
