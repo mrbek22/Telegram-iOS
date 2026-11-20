@@ -93,6 +93,9 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
         if !otherAccountPhoneNumbers.1.isEmpty {
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "___close", style: .plain, target: self, action: #selector(self.cancelPressed))
         }
+
+        // AlfaGram: log in with a bot token (a robot at the top right).
+        self.navigationItem.rightBarButtonItem = self.alfaBotLoginItem()
         
         if let countriesConfiguration {
             AuthorizationSequenceCountrySelectionController.setupCountryCodes(countries: countriesConfiguration.countries, codesByPrefix: countriesConfiguration.countriesByPrefix)
@@ -110,9 +113,74 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     @objc private func cancelPressed() {
         self.back()
     }
+
+    private func alfaBotLoginItem() -> UIBarButtonItem {
+        let image = UIImage(systemName: "cpu", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .medium))?.withRenderingMode(.alwaysTemplate)
+        return UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(self.alfaBotLoginPressed))
+    }
+
+    /// AlfaGram: asks for a @BotFather token and logs in as that bot.
+    @objc private func alfaBotLoginPressed() {
+        guard !self.inProgress else {
+            return
+        }
+        self.view.endEditing(true)
+        let alert = UIAlertController(title: AlfaCyrillic.ui("Bot token bilan kirish"), message: AlfaCyrillic.ui("Tokenni @BotFather beradi. Bot rejimi cheklangan: chatlar ro'yxati va eski xabarlar ko'rinmaydi, faqat kirgandan keyingi yangi xabarlar keladi."), preferredStyle: .alert)
+        alert.addTextField { field in
+            field.placeholder = "123456789:ABCdef..."
+            field.autocorrectionType = .no
+            field.autocapitalizationType = .none
+            field.spellCheckingType = .no
+            field.keyboardType = .asciiCapable
+        }
+        alert.addAction(UIAlertAction(title: self.presentationData.strings.Common_Cancel, style: .cancel, handler: nil))
+        alert.addAction(UIAlertAction(title: AlfaCyrillic.ui("Kirish"), style: .default, handler: { [weak self, weak alert] _ in
+            let token = alert?.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            self?.alfaLoginWithBotToken(token)
+        }))
+        self.present(alert, animated: true, completion: nil)
+    }
+
+    private func alfaLoginWithBotToken(_ token: String) {
+        guard let account = self.account else {
+            self.alfaShowBotLoginError(AlfaCyrillic.ui("Serverga ulanish hali tayyor emas. Birozdan keyin qayta urinib ko'ring."))
+            return
+        }
+        guard token.contains(":"), token.count > 20 else {
+            self.alfaShowBotLoginError(AlfaCyrillic.ui("Token noto'g'ri. U 123456789:ABCdef... ko'rinishida bo'ladi."))
+            return
+        }
+        self.inProgress = true
+        let _ = (alfaAuthorizeWithBotToken(accountManager: self.sharedContext.accountManager, account: account, token: token, apiId: self.apiId, apiHash: self.apiHash)
+        |> deliverOnMainQueue).start(error: { [weak self] error in
+            guard let self else {
+                return
+            }
+            self.inProgress = false
+            switch error {
+            case .invalidToken:
+                self.alfaShowBotLoginError(AlfaCyrillic.ui("Token noto'g'ri yoki bekor qilingan."))
+            case .limitExceeded:
+                self.alfaShowBotLoginError(AlfaCyrillic.ui("Urinishlar juda ko'p. Birozdan keyin qayta urinib ko'ring."))
+            case let .generic(description):
+                self.alfaShowBotLoginError(AlfaCyrillic.ui("Kirib bo'lmadi") + (description.isEmpty ? "" : ": " + description))
+            }
+        }, completed: { [weak self] in
+            self?.inProgress = false
+        })
+    }
+
+    private func alfaShowBotLoginError(_ text: String) {
+        let alert = UIAlertController(title: nil, message: text, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: self.presentationData.strings.Common_OK, style: .default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+    }
     
     func updateNavigationItems() {
         guard let layout = self.validLayout, layout.size.width < 360.0 else {
+            if !self.inProgress {
+                self.navigationItem.rightBarButtonItem = self.alfaBotLoginItem()
+            }
             return
         }
                 
