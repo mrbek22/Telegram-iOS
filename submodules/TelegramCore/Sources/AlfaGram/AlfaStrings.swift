@@ -126,6 +126,7 @@ public enum AlfaStrings {
         "Yangi xabar": ("New message", "Новое сообщение"),
         "AlfaGram haqida": ("About AlfaGram", "Об AlfaGram"),
         "Chatni eksport qilish": ("Export chat", "Экспорт чата"),
+        "Boshiga o'tish": ("Go to the beginning", "В начало чата"),
         "Chatni eksport qilish: oxirgi 5000 tagacha xabar. Formatni tanlang.": ("Export chat: up to the latest 5000 messages. Choose a format.", "Экспорт чата: до 5000 последних сообщений. Выберите формат."),
         "HTML sahifa": ("HTML page", "HTML-страница"),
         "Matn fayl (TXT)": ("Text file (TXT)", "Текстовый файл (TXT)"),

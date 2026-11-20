@@ -92,6 +92,14 @@ extension PeerInfoScreenNode {
         }
     }
 
+    /// AlfaGram: opens the chat scrolled to its first message (loaded from the server by date).
+    func alfaOpenChatAtBeginning() {
+        guard let navigationController = self.controller?.navigationController as? NavigationController, let chatPeer = self.data?.chatPeer else {
+            return
+        }
+        self.context.sharedContext.navigateToChatController(NavigateToChatControllerParams(navigationController: navigationController, context: self.context, chatLocation: .peer(chatPeer), subject: .message(id: .timestamp(1), highlight: nil, timecode: nil, setupReply: false), keepStack: .always, useExisting: false))
+    }
+
     func switchToAccount(id: AccountRecordId) {
         self.accountsAndPeers.set(.never())
         self.context.sharedContext.switchToAccount(id: id, fromSettingsController: nil, withChatListController: nil)

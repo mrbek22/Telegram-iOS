@@ -444,6 +444,16 @@ extension PeerInfoScreenNode {
                     }
                 }
                 
+                // AlfaGram: «Go to the beginning» — the chat opens at its very first message (users, groups, channels).
+                if strongSelf.peerId.namespace != Namespaces.Peer.SecretChat {
+                    items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Boshiga o'tish"), icon: { theme in
+                        generateTintedImage(image: UIImage(systemName: "arrow.up.to.line", withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .regular)), color: theme.contextMenu.primaryColor)
+                    }, action: { [weak self] _, f in
+                        f(.dismissWithoutContent)
+                        self?.alfaOpenChatAtBeginning()
+                    })))
+                }
+
                 if filteredButtons.contains(.call) {
                     items.append(.action(ContextMenuActionItem(text: presentationData.strings.PeerInfo_ButtonCall, icon: { theme in
                         generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Call"), color: theme.contextMenu.primaryColor)
