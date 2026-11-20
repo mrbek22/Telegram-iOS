@@ -122,6 +122,8 @@ public enum AlfaStrings {
         "Chat qulfdan chiqarildi": ("Chat unlocked", "Блокировка чата снята"),
         "Chat qulflandi: ochish uchun Face ID yoki parol so'raladi": ("Chat locked: Face ID or the passcode is needed to open it", "Чат заблокирован: для открытия нужен Face ID или код"),
         "Media hali yuklanmagan": ("The media isn't downloaded yet", "Медиа ещё не загружено"),
+        "Hammasini belgilash": ("Select all", "Выбрать все"),
+        "Belgilarni olib tashlash": ("Deselect all", "Снять выделение"),
         "CHEKLOVSIZ": ("NO RESTRICTIONS", "БЕЗ ОГРАНИЧЕНИЙ"),
         "Taqiqlangan chatlardan saqlash": ("Save from restricted chats", "Сохранять из защищённых чатов"),
         "Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.": ("Save photos, videos and text and take screenshots even in chats where saving and copying are disabled. Telegram's server may still block forwarding.", "Сохраняйте фото, видео и текст и делайте скриншоты даже в чатах, где сохранение и копирование запрещены. Пересылку сервер Telegram всё равно может заблокировать."),

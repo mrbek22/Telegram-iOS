@@ -67,6 +67,8 @@ public class ContactsController: ViewController {
     private var presentationData: PresentationData
     private var presentationDataDisposable: Disposable?
     private var selectionDisposable: Disposable?
+    /// AlfaGram: the number of contacts, known after «Select all» was pressed once.
+    private var alfaContactCount: Int?
     private var actionDisposable = MetaDisposable()
     private let sortOrderPromise = Promise<ContactsSortOrder>()
     private let isInVoiceOver = ValuePromise<Bool>(false)
@@ -363,8 +365,15 @@ public class ContactsController: ViewController {
             }
             
             let toolbar: Toolbar?
-            if let state, state.selectedPeerIndices.count > 0 {
-                toolbar = Toolbar(leftAction: nil, rightAction: nil, middleAction: ToolbarAction(title: self.presentationData.strings.ContactList_DeleteConfirmation(Int32(state.selectedPeerIndices.count)), isEnabled: true, color: .custom(self.presentationData.theme.actionSheet.destructiveActionTextColor)))
+            if let state {
+                // AlfaGram: «Select all» / «Deselect all» on the left, delete in the middle.
+                let selectedCount = state.selectedPeerIndices.count
+                var allSelected = false
+                if let total = self.alfaContactCount, total > 0 {
+                    allSelected = selectedCount >= total
+                }
+                let selectAllAction = ToolbarAction(title: allSelected ? AlfaCyrillic.ui("Belgilarni olib tashlash") : AlfaCyrillic.ui("Hammasini belgilash"), isEnabled: true)
+                toolbar = Toolbar(leftAction: selectAllAction, rightAction: nil, middleAction: ToolbarAction(title: self.presentationData.strings.ContactList_DeleteConfirmation(Int32(selectedCount)), isEnabled: selectedCount > 0, color: .custom(self.presentationData.theme.actionSheet.destructiveActionTextColor)))
             } else {
                 toolbar = nil
             }
@@ -382,7 +391,37 @@ public class ContactsController: ViewController {
         self.displayNodeDidLoad()
     }
     
+    /// AlfaGram: selects every contact, or clears the selection when all are already selected.
+    private func alfaToggleSelectAll() {
+        let _ = (self.context.engine.data.get(TelegramEngine.EngineData.Item.Contacts.List(includePresences: false))
+        |> deliverOnMainQueue).start(next: { [weak self] contacts in
+            guard let self else {
+                return
+            }
+            let ids = contacts.peers.map { ContactListPeerId.peer($0.id) }
+            self.alfaContactCount = ids.count
+            self.contactsNode.contactListNode.updateSelectionState({ current in
+                guard var state = current else {
+                    return current
+                }
+                if !ids.isEmpty && state.selectedPeerIndices.count >= ids.count {
+                    return ContactListNodeGroupSelectionState()
+                }
+                for id in ids {
+                    if state.selectedPeerIndices[id] == nil {
+                        state = state.withToggledPeerId(id)
+                    }
+                }
+                return state
+            })
+        })
+    }
+
     override public func toolbarActionSelected(action: ToolbarActionOption) {
+        if case .left = action {
+            self.alfaToggleSelectAll()
+            return
+        }
         guard case .middle = action, let selectionState = self.contactsNode.contactListNode.selectionState else {
             return
         }
