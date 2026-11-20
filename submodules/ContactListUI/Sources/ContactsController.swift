@@ -275,6 +275,43 @@ public class ContactsController: ViewController {
             }
         }
         
+        // AlfaGram: New Group — pick members, then the group's name (as in «New Message»).
+        self.contactsNode.openAlfaNewGroup = { [weak self] in
+            guard let self else {
+                return
+            }
+            let controller = self.context.sharedContext.makeContactMultiselectionController(ContactMultiselectionControllerParams(context: self.context, mode: .groupCreation(isCall: false), onlyWriteable: true))
+            (self.navigationController as? NavigationController)?.pushViewController(controller, completion: { [weak self] in
+                self?.contactsNode.contactListNode.listNode.clearHighlightAnimated(true)
+            })
+            self.actionDisposable.set((controller.result
+            |> deliverOnMainQueue).start(next: { [weak self, weak controller] result in
+                guard let self, let controller else {
+                    return
+                }
+                var peerIds: [EnginePeer.Id] = []
+                if case let .result(peerIdsValue, _) = result {
+                    for peerId in peerIdsValue {
+                        if case let .peer(id) = peerId {
+                            peerIds.append(id)
+                        }
+                    }
+                }
+                let createGroup = self.context.sharedContext.makeCreateGroupController(context: self.context, peerIds: peerIds, initialTitle: nil, mode: .generic, completion: nil)
+                (controller.navigationController as? NavigationController)?.pushViewController(createGroup)
+            }))
+        }
+
+        // AlfaGram: New Channel.
+        self.contactsNode.openAlfaNewChannel = { [weak self] in
+            guard let self else {
+                return
+            }
+            (self.navigationController as? NavigationController)?.pushViewController(self.context.sharedContext.alfaMakeNewChannelController(context: self.context), completion: { [weak self] in
+                self?.contactsNode.contactListNode.listNode.clearHighlightAnimated(true)
+            })
+        }
+
         self.contactsNode.openAlfaProfileLog = { [weak self] in
             guard let strongSelf = self else {
                 return

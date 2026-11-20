@@ -67,6 +67,8 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
     var requestAddContact: ((String) -> Void)?
     var openInvite: (() -> Void)?
     var openAlfaProfileLog: (() -> Void)?
+    var openAlfaNewGroup: (() -> Void)?
+    var openAlfaNewChannel: (() -> Void)?
     var openQrScan: (() -> Void)?
     var openStories: ((EnginePeer, ASDisplayNode) -> Void)?
     
@@ -99,11 +101,18 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         var inviteImpl: (() -> Void)?
         var alfaProfileLogImpl: (() -> Void)?
+        var alfaNewGroupImpl: (() -> Void)?
+        var alfaNewChannelImpl: (() -> Void)?
         
         let presentation = combineLatest(sortOrder, self.stringsPromise.get())
         |> map { sortOrder, strings -> ContactListPresentation in
+            // AlfaGram: New Group / New Channel above «Profile changes».
             let options = [ContactListAdditionalOption(title: strings.Contacts_InviteFriends, icon: .generic(UIImage(bundleImageName: "Contact List/AddMemberIcon")!), action: {
                 inviteImpl?()
+            }), ContactListAdditionalOption(title: strings.Compose_NewGroup, icon: .generic(UIImage(bundleImageName: "Contact List/CreateGroupActionIcon")!), action: {
+                alfaNewGroupImpl?()
+            }), ContactListAdditionalOption(title: strings.Compose_NewChannel, icon: .generic(UIImage(bundleImageName: "Contact List/CreateChannelActionIcon")!), action: {
+                alfaNewChannelImpl?()
             }), ContactListAdditionalOption(title: AlfaCyrillic.ui("Profil o'zgarishlari"), icon: .generic(UIImage(bundleImageName: "Contact List/LinkActionIcon")!), action: {
                 alfaProfileLogImpl?()
             })]
@@ -159,6 +168,12 @@ final class ContactsControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         }
         alfaProfileLogImpl = { [weak self] in
             self?.openAlfaProfileLog?()
+        }
+        alfaNewGroupImpl = { [weak self] in
+            self?.openAlfaNewGroup?()
+        }
+        alfaNewChannelImpl = { [weak self] in
+            self?.openAlfaNewChannel?()
         }
         
         contextAction = { [weak self] peer, node, gesture, location, isStories in

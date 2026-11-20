@@ -2535,6 +2535,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
     public func makeCreateChannelController(context: AccountContext, completion: @escaping (EnginePeer.Id, @escaping () -> Void) -> Void) -> ViewController {
         return createChannelController(context: context, mode: .community, completion: completion)
     }
+
+    public func alfaMakeNewChannelController(context: AccountContext) -> ViewController {
+        return createChannelController(context: context)
+    }
     
     public func makeChatListController(context: AccountContext, location: ChatListControllerLocation, controlsHistoryPreload: Bool, hideNetworkActivityStatus: Bool, previewing: Bool, enableDebugActions: Bool) -> ChatListController {
         return ChatListControllerImpl(context: context, location: location, controlsHistoryPreload: controlsHistoryPreload, hideNetworkActivityStatus: hideNetworkActivityStatus, previewing: previewing, enableDebugActions: enableDebugActions)
