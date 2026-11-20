@@ -70,6 +70,31 @@ public enum AlfaChatLock {
     }
 }
 
+/// AlfaGram: "paused" accounts — no notifications at all until resumed, as if logged out on this phone.
+public enum AlfaPausedAccounts {
+    private static let key = "alfa_paused_accounts"
+
+    public static func ids() -> Set<Int64> {
+        let values = AlfaSharedDefaults.value.array(forKey: key) as? [NSNumber] ?? []
+        return Set(values.map { $0.int64Value })
+    }
+
+    public static func isPaused(accountPeerId: PeerId) -> Bool {
+        return ids().contains(accountPeerId.toInt64())
+    }
+
+    public static func setPaused(accountPeerId: PeerId, paused: Bool) {
+        var values = ids()
+        if paused {
+            values.insert(accountPeerId.toInt64())
+        } else {
+            values.remove(accountPeerId.toInt64())
+        }
+        AlfaSharedDefaults.value.set(values.map { NSNumber(value: $0) }, forKey: key)
+        NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": "pausedAccounts"])
+    }
+}
+
 /// AlfaGram: accounts hidden from the accounts list, the account switcher and quick actions.
 /// They are reached only from AlfaGram settings → «Maxfiy akkauntlar» after Face ID / the passcode.
 public enum AlfaHiddenAccounts {

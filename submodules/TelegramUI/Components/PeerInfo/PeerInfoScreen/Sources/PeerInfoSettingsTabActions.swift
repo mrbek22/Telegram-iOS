@@ -13,12 +13,13 @@ import ComponentFlow
 import ComponentDisplayAdapters
 import EmojiStatusComponent
 import SettingsUI
+import AlfaGramUI
 
 extension PeerInfoScreenNode {
     func accountContextMenuItems(context: AccountContext, logout: @escaping () -> Void) -> Signal<[ContextMenuItem], NoError> {
         let strings = context.sharedContext.currentPresentationData.with({ $0 }).strings
         return context.engine.messages.unreadChatListPeerIds(groupId: .root, filterPredicate: nil)
-        |> map { unreadChatListPeerIds -> [ContextMenuItem] in
+        |> map { [weak self] unreadChatListPeerIds -> [ContextMenuItem] in
             var items: [ContextMenuItem] = []
             
             if !unreadChatListPeerIds.isEmpty {
@@ -30,6 +31,33 @@ extension PeerInfoScreenNode {
                 })))
             }
             
+            // AlfaGram: pause (no notifications until resumed), hide, and the hidden accounts page.
+            let accountPeerId = context.account.peerId
+            let isPaused = AlfaPausedAccounts.isPaused(accountPeerId: accountPeerId)
+            let symbolIcon: (String) -> (PresentationTheme) -> UIImage? = { name in
+                return { theme in
+                    return generateTintedImage(image: UIImage(systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: 18.0, weight: .regular)), color: theme.contextMenu.primaryColor)
+                }
+            }
+            items.append(.action(ContextMenuActionItem(text: isPaused ? AlfaCyrillic.ui("Qayta yoqish") : AlfaCyrillic.ui("Vaqtincha to'xtatish"), textLayout: .secondLineWithValue(isPaused ? AlfaCyrillic.ui("Bildirishnomalar o'chiq") : AlfaCyrillic.ui("Bildirishnoma kelmaydi")), icon: symbolIcon(isPaused ? "play.circle" : "pause.circle"), action: { _, f in
+                AlfaPausedAccounts.setPaused(accountPeerId: accountPeerId, paused: !isPaused)
+                f(.default)
+            })))
+            items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Yashirish"), textLayout: .secondLineWithValue(AlfaCyrillic.ui("Maxfiy akkauntlarga o'tadi")), icon: symbolIcon("eye.slash"), action: { _, f in
+                AlfaHiddenAccounts.setHidden(accountPeerId: accountPeerId, hidden: true)
+                f(.default)
+            })))
+            items.append(.action(ContextMenuActionItem(text: AlfaCyrillic.ui("Maxfiy akkauntlar"), icon: symbolIcon("person.crop.circle.badge.xmark"), action: { [weak self] _, f in
+                f(.default)
+                AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { success in
+                    guard success, let self else {
+                        return
+                    }
+                    self.controller?.push(alfaHiddenAccountsController(context: self.context))
+                })
+            })))
+            items.append(.separator)
+
             items.append(.action(ContextMenuActionItem(text: strings.Settings_Context_Logout, textColor: .destructive, icon: { theme in generateTintedImage(image: UIImage(bundleImageName: "Chat/Context Menu/Logout"), color: theme.contextMenu.destructiveColor) }, action: { _, f in
                 logout()
                 f(.default)

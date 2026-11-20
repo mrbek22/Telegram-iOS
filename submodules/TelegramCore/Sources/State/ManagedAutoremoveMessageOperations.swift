@@ -81,6 +81,12 @@ func managedAutoremoveMessageOperations(network: Network, postbox: Postbox, isRe
                 |> then(postbox.transaction { transaction -> Void in
                     Logger.shared.log("Autoremove", "Performing autoremove for \(entry.messageId), isRemove: \(isRemove)")
 
+                    // AlfaGram: self-destructing messages stay (the timer is dropped, nothing is deleted).
+                    if AlfaSettings.keepSelfDestructing {
+                        transaction.clearTimestampBasedAttribute(id: entry.messageId, tag: tag)
+                        return
+                    }
+
                     if let message = transaction.getMessage(entry.messageId) {
                         if message.id.peerId.namespace == Namespaces.Peer.SecretChat || isRemove {
                             _internal_deleteMessages(transaction: transaction, mediaBox: postbox.mediaBox, ids: [entry.messageId])

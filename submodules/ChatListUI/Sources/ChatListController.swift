@@ -2158,6 +2158,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                         if case .community = peer.peer {
                             let communityController = strongSelf.makeCommunityViewController(communityId: peer.peerId, mode: .preview)
                             source = .controller(ContextControllerContentSourceImpl(controller: communityController, sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController))
+                        } else if AlfaChatLock.isLocked(accountPeerId: strongSelf.context.account.peerId, peerId: peer.peerId) {
+                            // AlfaGram: a locked chat's long-press preview shows a lock, never the messages.
+                            source = .controller(ContextControllerContentSourceImpl(controller: AlfaLockedChatPreviewController(presentationData: strongSelf.presentationData), sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController))
                         } else if let location = location {
                             source = .location(ChatListContextLocationContentSource(controller: strongSelf, location: location))
                         } else {
@@ -2245,7 +2248,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                 let communityController = strongSelf.makeCommunityViewController(communityId: peer.id, mode: .preview)
                 let contextController = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .controller(ContextControllerContentSourceImpl(controller: communityController, sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController)), items: chatContextMenuItems(context: strongSelf.context, peerId: peer.id, promoInfo: nil, source: .search(source), chatListController: strongSelf, joined: false) |> map { ContextController.Items(content: .list($0)) }, gesture: gesture)
                 strongSelf.presentInGlobalOverlay(contextController)
-            } else if AlfaChatLock.needsUnlock(accountPeerId: strongSelf.context.account.peerId, peerId: peer.id) {
+            } else if AlfaChatLock.isLocked(accountPeerId: strongSelf.context.account.peerId, peerId: peer.id) {
                 // AlfaGram: no message preview for a locked chat.
                 let previewController = AlfaLockedChatPreviewController(presentationData: strongSelf.presentationData)
                 let contextController = makeContextController(context: strongSelf.context, presentationData: strongSelf.presentationData, source: .controller(ContextControllerContentSourceImpl(controller: previewController, sourceNode: node, navigationController: strongSelf.navigationController as? NavigationController)), items: chatContextMenuItems(context: strongSelf.context, peerId: peer.id, promoInfo: nil, source: .search(source), chatListController: strongSelf, joined: false) |> map { ContextController.Items(content: .list($0)) }, gesture: gesture)

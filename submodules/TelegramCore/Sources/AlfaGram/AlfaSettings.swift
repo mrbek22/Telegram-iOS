@@ -42,12 +42,14 @@ public enum AlfaSettings {
         case roundVideoAsk
         /// Round video messages start with the back camera (the last answer to `roundVideoAsk`).
         case roundVideoBackCamera
+        /// View-once and self-destructing photos, videos, voice and round messages stay in the chat after viewing.
+        case keepSelfDestructing
 
         public var defaultValue: Bool {
             switch self {
             case .saveDeletedMessages, .saveEditHistory, .blockAds, .linkGuard, .showMessageId, .onlineLog, .profileLog, .typingLog, .unrestrictedSave, .stealthStories:
                 return true
-            case .roundVideoAsk:
+            case .roundVideoAsk, .keepSelfDestructing:
                 return true
             case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend, .roundVideoBackCamera:
                 return false
@@ -160,6 +162,10 @@ public enum AlfaSettings {
 
     public static var roundVideoBackCamera: Bool {
         return value(.roundVideoBackCamera)
+    }
+
+    public static var keepSelfDestructing: Bool {
+        return value(.keepSelfDestructing)
     }
 
     public static var unrestrictedSave: Bool {

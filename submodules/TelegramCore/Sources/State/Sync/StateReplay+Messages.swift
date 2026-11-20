@@ -341,7 +341,7 @@ extension ReplayContext {
                 generatedEvent = reactionGeneratedEvent(previousMessage.reactionsAttribute, message.reactionsAttribute, message: message, transaction: transaction)
             }
 
-            return .update(alfaMessageWithEditHistory(previous: previousMessage, updated: mergedServerMessageUpdate(previous: previousMessage, updated: message)))
+            return .update(alfaKeepingExpiringMedia(previous: previousMessage, updated: alfaMessageWithEditHistory(previous: previousMessage, updated: mergedServerMessageUpdate(previous: previousMessage, updated: message))))
         })
         // A fetch in flight may be bringing the message with its old content, over the edited one or, with none stored
         // here, instead of it; it stores this edit in its place (Postbox's record of recent edits,

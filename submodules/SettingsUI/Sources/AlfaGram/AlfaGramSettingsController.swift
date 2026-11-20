@@ -18,6 +18,7 @@ private enum AlfaGramSettingsAction: Equatable {
     case autoFolders
     case hiddenAccounts
     case about
+    case roundVideoCamera
 }
 
 private final class AlfaGramSettingsControllerArguments {
@@ -50,18 +51,20 @@ private enum AlfaGramSettingsEntry: ItemListNodeEntry, Equatable {
     case toggle(Int32, Int32, AlfaSettings.Key, String, String, String, UInt32, Bool)
     /// section, id, action, title, icon symbol, icon color
     case action(Int32, Int32, AlfaGramSettingsAction, String, String, UInt32)
+    /// section, id, action, title, current value, icon symbol, icon color
+    case choice(Int32, Int32, AlfaGramSettingsAction, String, String, String, UInt32)
     case info(Int32, Int32, String)
 
     var section: ItemListSectionId {
         switch self {
-        case let .header(section, _, _), let .toggle(section, _, _, _, _, _, _, _), let .action(section, _, _, _, _, _), let .info(section, _, _):
+        case let .header(section, _, _), let .toggle(section, _, _, _, _, _, _, _), let .action(section, _, _, _, _, _), let .choice(section, _, _, _, _, _, _), let .info(section, _, _):
             return section
         }
     }
 
     var stableId: Int32 {
         switch self {
-        case let .header(_, id, _), let .toggle(_, id, _, _, _, _, _, _), let .action(_, id, _, _, _, _), let .info(_, id, _):
+        case let .header(_, id, _), let .toggle(_, id, _, _, _, _, _, _), let .action(_, id, _, _, _, _), let .choice(_, id, _, _, _, _, _), let .info(_, id, _):
             return id
         }
     }
@@ -83,9 +86,24 @@ private enum AlfaGramSettingsEntry: ItemListNodeEntry, Equatable {
             return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: alfaSettingsIcon(symbol, color), title: title, label: "", sectionId: self.section, style: .blocks, action: {
                 arguments.open(action)
             })
+        case let .choice(_, _, action, title, value, symbol, color):
+            return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: alfaSettingsIcon(symbol, color), title: title, label: value, sectionId: self.section, style: .blocks, action: {
+                arguments.open(action)
+            })
         case let .info(_, _, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
+    }
+}
+
+/// AlfaGram: the round video camera mode as shown in settings.
+private func alfaRoundVideoCameraLabel() -> String {
+    if AlfaSettings.roundVideoAsk {
+        return AlfaCyrillic.ui("Har safar so'rash")
+    } else if AlfaSettings.roundVideoBackCamera {
+        return AlfaCyrillic.ui("Doim orqa")
+    } else {
+        return AlfaCyrillic.ui("Doim old")
     }
 }
 
@@ -126,7 +144,7 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.header(8, next(), ui("CHATLAR")))
     entries.append(.toggle(8, next(), .hideStories, ui("Story'lar qatorini yashirish"), ui("Chatlar ro'yxati tepasidagi story qatori"), "circle.dashed", 0xaf52de, AlfaSettings.hideStories))
     entries.append(.toggle(8, next(), .silentSend, ui("Hammasini ovozsiz yuborish"), ui("Xabarlaringiz qabul qiluvchida tovushsiz keladi"), "bell.slash.fill", 0x5856d6, AlfaSettings.silentSend))
-    entries.append(.toggle(8, next(), .roundVideoAsk, ui("Dumaloq videoda kamerani so'rash"), ui("Bosib turganda old yoki orqa kamera so'raladi"), "video.circle.fill", 0xff9500, AlfaSettings.roundVideoAsk))
+    entries.append(.choice(8, next(), .roundVideoCamera, ui("Dumaloq video kamerasi"), alfaRoundVideoCameraLabel(), "video.circle.fill", 0xff9500))
 
     entries.append(.header(9, next(), ui("MAXFIYLIK")))
     entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar"), "person.crop.circle.badge.xmark", 0x007aff))
@@ -134,6 +152,7 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
 
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
     entries.append(.toggle(6, next(), .unrestrictedSave, ui("Taqiqlangan chatlardan saqlash"), ui("Rasm, video va matnni saqlash, skrinshot olish"), "square.and.arrow.down.fill", 0x30b0c7, AlfaSettings.unrestrictedSave))
+    entries.append(.toggle(6, next(), .keepSelfDestructing, ui("Bir martalik media o'chmasin"), ui("Bir martalik va soniyali rasm, video, ovoz chatda qoladi"), "timer", 0xff2d55, AlfaSettings.keepSelfDestructing))
     entries.append(.info(6, next(), ui("Saqlash va nusxa olish yopilgan chatlarda ham rasm, video va matnni saqlash, skrinshot olish. Forward'ni Telegram serveri baribir bloklashi mumkin.")))
 
     entries.append(.header(4, next(), ui("TIL")))
@@ -203,7 +222,7 @@ private enum AlfaHiddenAccountsEntry: ItemListNodeEntry, Equatable {
 }
 
 /// AlfaGram: which accounts are hidden from the accounts list and the switcher; a hidden one opens from here.
-private func alfaHiddenAccountsController(context: AccountContext) -> ViewController {
+public func alfaHiddenAccountsController(context: AccountContext) -> ViewController {
     let arguments = AlfaHiddenAccountsArguments(toggle: { peerId, hidden in
         AlfaHiddenAccounts.setHidden(accountPeerId: peerId, hidden: hidden)
     }, open: { accountId in
@@ -242,6 +261,7 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
     var pushImpl: ((ViewController) -> Void)?
     var openHelpImpl: (() -> Void)?
     var presentAlertImpl: ((String) -> Void)?
+    var presentRoundVideoCameraImpl: (() -> Void)?
 
     let arguments = AlfaGramSettingsControllerArguments(toggle: { key, value in
         AlfaSettings.setValue(key, value)
@@ -265,6 +285,8 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
             openHelpImpl?()
         case .about:
             pushImpl?(alfaAboutController(context: context))
+        case .roundVideoCamera:
+            presentRoundVideoCameraImpl?()
         case .hiddenAccounts:
             AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { success in
                 if success {
@@ -292,6 +314,36 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
     let controller = ItemListController(context: context, state: signal)
     pushImpl = { [weak controller] c in
         controller?.push(c)
+    }
+    presentRoundVideoCameraImpl = { [weak controller] in
+        let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        let actionSheet = ActionSheetController(presentationData: presentationData)
+        let select: (Bool, Bool) -> Void = { [weak actionSheet] ask, back in
+            actionSheet?.dismissAnimated()
+            AlfaSettings.setValue(.roundVideoAsk, ask)
+            AlfaSettings.setValue(.roundVideoBackCamera, back)
+            revisionPromise.set(0)
+        }
+        actionSheet.setItemGroups([
+            ActionSheetItemGroup(items: [
+                ActionSheetTextItem(title: AlfaCyrillic.ui("Dumaloq video qaysi kamerada boshlansin?")),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Har safar so'rash"), color: .accent, action: {
+                    select(true, AlfaSettings.roundVideoBackCamera)
+                }),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Doim old kamera"), color: .accent, action: {
+                    select(false, false)
+                }),
+                ActionSheetButtonItem(title: AlfaCyrillic.ui("Doim orqa kamera"), color: .accent, action: {
+                    select(false, true)
+                })
+            ]),
+            ActionSheetItemGroup(items: [
+                ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                })
+            ])
+        ])
+        controller?.present(actionSheet, in: .window(.root))
     }
     presentAlertImpl = { [weak controller] text in
         let presentationData = context.sharedContext.currentPresentationData.with { $0 }

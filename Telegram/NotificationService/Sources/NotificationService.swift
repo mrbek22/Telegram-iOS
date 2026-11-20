@@ -545,7 +545,7 @@ private struct NotificationContent: CustomStringConvertible {
             return nil
         }
         let accountPeerId = PeerId(accountValue)
-        if AlfaHiddenAccounts.isHidden(accountPeerId: accountPeerId) {
+        if AlfaHiddenAccounts.isHidden(accountPeerId: accountPeerId) || AlfaPausedAccounts.isPaused(accountPeerId: accountPeerId) {
             var hidden = NotificationContent(isLockedMessage: nil)
             hidden.alfaChecked = true
             return hidden

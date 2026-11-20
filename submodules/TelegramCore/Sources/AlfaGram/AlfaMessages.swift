@@ -121,6 +121,21 @@ func alfaKeepDeletedMessages(transaction: Transaction, ids: [MessageId]) -> [Mes
     return remaining
 }
 
+/// AlfaGram: when the server turns a view-once / self-destructing message's media into "expired", the media this
+/// device already has stays (`AlfaSettings.keepSelfDestructing`).
+func alfaKeepingExpiringMedia(previous: Message, updated: StoreMessage) -> StoreMessage {
+    if !AlfaSettings.keepSelfDestructing {
+        return updated
+    }
+    if !updated.media.contains(where: { $0 is TelegramMediaExpiredContent }) {
+        return updated
+    }
+    if !previous.media.contains(where: { $0 is TelegramMediaImage || $0 is TelegramMediaFile }) {
+        return updated
+    }
+    return updated.withUpdatedMedia(previous.media)
+}
+
 /// AlfaGram: `updated` (the server's copy of an edited message) with the text it replaces added to its edit
 /// history, when `AlfaSettings.saveEditHistory` is on and the text changed.
 func alfaMessageWithEditHistory(previous: Message, updated: StoreMessage) -> StoreMessage {
