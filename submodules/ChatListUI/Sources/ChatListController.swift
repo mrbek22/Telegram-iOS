@@ -836,7 +836,8 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             }
         }
         
-        if case .chatList(.root) = self.location {
+        // AlfaGram: the archive gets the local tabs too (Personal / Mutual / Groups / Channels / Bots).
+        if case .chatList = self.location {
             self.chatListDisplayNode.mainContainerNode.currentItemFilterUpdated = { [weak self] filter, fraction, transition, force in
                 guard let strongSelf = self else {
                     return
@@ -4166,7 +4167,33 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     
     private var initializedFilters = false
     private func reloadFilters(firstUpdate: (() -> Void)? = nil) {
-        let filterItems = chatListFilterItems(context: self.context)
+        var filterItems = chatListFilterItems(context: self.context)
+        if case .chatList(.archive) = self.location {
+            // AlfaGram: in the archive only the local tabs (the user's own folders stay in the main list), without
+            // unread counters — those count the main list.
+            filterItems = filterItems
+            |> map { _, items -> (Int, [(ChatListFilter, Int, Bool)]) in
+                let localItems = items.filter { item -> Bool in
+                    if case let .filter(id, _, _, _) = item.0 {
+                        return AlfaLocalTabs.isLocal(id)
+                    } else {
+                        return true
+                    }
+                }
+                if !localItems.contains(where: { item -> Bool in
+                    if case .filter = item.0 {
+                        return true
+                    } else {
+                        return false
+                    }
+                }) {
+                    return (0, [])
+                }
+                return (0, localItems.map { item -> (ChatListFilter, Int, Bool) in
+                    return (item.0, 0, false)
+                })
+            }
+        }
         var notifiedFirstUpdate = false
         self.filterDisposable.set((combineLatest(queue: .mainQueue(),
             filterItems,
@@ -4198,7 +4225,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             }
             
             var resolvedItems = filterItems
-            if case .chatList(.root) = strongSelf.location {
+            if case .chatList = strongSelf.location {
             } else {
                 resolvedItems = []
             }

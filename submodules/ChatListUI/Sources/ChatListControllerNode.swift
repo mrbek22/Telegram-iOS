@@ -1295,11 +1295,12 @@ final class ChatListControllerNode: ASDisplayNode, ASGestureRecognizerDelegate {
         
         self.addSubnode(self.debugListView)
         
-        filterBecameEmpty = { [weak self] _ in
+        filterBecameEmpty = { [weak self] filter in
             guard let strongSelf = self else {
                 return
             }
-            if case .chatList(.archive) = strongSelf.location {
+            // AlfaGram: an empty archive tab must not close the archive — only the whole archive becoming empty does.
+            if case .chatList(.archive) = strongSelf.location, filter == nil {
                 strongSelf.dismissSelfIfCompletedPresentation?()
             }
         }
