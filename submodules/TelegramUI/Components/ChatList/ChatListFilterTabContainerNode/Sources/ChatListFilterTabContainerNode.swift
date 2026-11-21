@@ -362,10 +362,10 @@ private final class ItemNode: ASDisplayNode {
         guard let name else {
             return
         }
-        // Telegram's own folder icons (a robot for bots), drawn at 22 pt.
+        // Telegram's own folder icons (a robot for bots), drawn at 20 pt.
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
-            let side: CGFloat = 22.0
+            let side: CGFloat = 20.0
             image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
                 source.draw(in: CGRect(x: 0.0, y: 0.0, width: side, height: side))
             }.withRenderingMode(.alwaysTemplate)
@@ -395,6 +395,12 @@ private final class ItemNode: ASDisplayNode {
         self.shortTitleContainer.frame = shortTitleFrame
         self.shortTitleNode.frame = CGRect(origin: CGPoint(), size: shortTitleFrame.size)
         self.shortTitleActiveNode.frame = CGRect(origin: CGPoint(), size: shortTitleFrame.size)
+        // AlfaGram: the icon follows its text node — it was added while the node was still zero-sized.
+        for view in self.alfaIconViews {
+            if let superview = view.superview {
+                view.frame = superview.bounds
+            }
+        }
         
         if let deleteButtonNode = self.deleteButtonNode {
             if let theme = self.theme {

@@ -34,14 +34,34 @@ public enum AlfaChatLock {
         return defaults(key).stringArray(forKey: key) ?? []
     }
 
+    // Every chat list row asks isLocked (twice): keep the locked set in memory instead of re-reading UserDefaults.
+    // Only this process writes it (the extensions only read), so setLocked refreshes the cache.
+    private static let cacheLock = NSLock()
+    private static var lockedCache: Set<String>?
+
+    private static func lockedSet() -> Set<String> {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        if let lockedCache {
+            return lockedCache
+        }
+        let value = Set(list(lockedKey))
+        lockedCache = value
+        return value
+    }
+
     public static func isLocked(accountPeerId: PeerId, peerId: PeerId) -> Bool {
-        return list(lockedKey).contains(entry(accountPeerId, peerId))
+        let set = lockedSet()
+        if set.isEmpty {
+            return false
+        }
+        return set.contains(entry(accountPeerId, peerId))
     }
 
     /// Locked and not yet unlocked in this foreground session.
     public static func needsUnlock(accountPeerId: PeerId, peerId: PeerId) -> Bool {
         let value = entry(accountPeerId, peerId)
-        return list(lockedKey).contains(value) && !list(unlockedKey).contains(value)
+        return lockedSet().contains(value) && !list(unlockedKey).contains(value)
     }
 
     public static func setLocked(accountPeerId: PeerId, peerId: PeerId, locked: Bool) {
@@ -51,6 +71,9 @@ public enum AlfaChatLock {
             items.append(value)
         }
         AlfaSharedDefaults.value.set(items, forKey: lockedKey)
+        cacheLock.lock()
+        lockedCache = Set(items)
+        cacheLock.unlock()
         UserDefaults.standard.set(list(unlockedKey).filter { $0 != value }, forKey: unlockedKey)
         NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": "chatLock"])
     }

@@ -1994,6 +1994,10 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
         if enableRecentlySearched {
             fixedRecentlySearchedPeers = context.engine.peers.recentlySearchedPeers()
             |> map { peers -> [RecentlySearchedPeer] in
+                // AlfaGram: hidden chats are not among the recent searches.
+                return peers.filter { !AlfaHiddenChats.isHiddenNow(accountPeerId: context.account.peerId, peerId: $0.peer.peerId) }
+            }
+            |> map { peers -> [RecentlySearchedPeer] in
                 var result: [RecentlySearchedPeer] = []
                 let _ = previousRecentlySearchedPeerOrder.modify { current in
                     var updated: [EnginePeer.Id] = []
@@ -2341,6 +2345,9 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
                     }
                 } else {
                     let fixedOrRemovedRecentlySearchedPeers = context.engine.peers.recentlySearchedPeers()
+                    |> map { peers -> [RecentlySearchedPeer] in
+                        return peers.filter { !AlfaHiddenChats.isHiddenNow(accountPeerId: context.account.peerId, peerId: $0.peer.peerId) }
+                    }
                     |> map { peers -> [RecentlySearchedPeer] in
                         let allIds = peers.map(\.peer.peerId)
 
@@ -3492,6 +3499,24 @@ final class ChatListSearchListPaneNode: ASDisplayNode, ChatListSearchPaneNode {
 
                 if case .chats = key, !peersFilter.contains(.excludeRecent), isViablePhoneNumber(finalQuery) {
                     entries.append(.addContact(finalQuery, presentationData.theme, presentationData.strings))
+                }
+
+                // AlfaGram: hidden chats (not revealed with their code) never show in search — neither the chat
+                // nor its messages.
+                if !AlfaHiddenChats.isRevealed {
+                    let alfaAccountPeerId = context.account.peerId
+                    entries = entries.filter { entry in
+                        switch entry {
+                        case let .localPeer(peer, _, _, _, _, _, _, _, _, _, _, _):
+                            return !AlfaHiddenChats.isHidden(accountPeerId: alfaAccountPeerId, peerId: peer.id)
+                        case let .globalPeer(foundPeer, _, _, _, _, _, _, _, _, _, _):
+                            return !AlfaHiddenChats.isHidden(accountPeerId: alfaAccountPeerId, peerId: foundPeer.peer.id)
+                        case let .message(message, _, _, _, _, _, _, _, _, _, _, _, _, _, _):
+                            return !AlfaHiddenChats.isHidden(accountPeerId: alfaAccountPeerId, peerId: message.id.peerId)
+                        default:
+                            return true
+                        }
+                    }
                 }
 
                 return (entries, isSearching, query)

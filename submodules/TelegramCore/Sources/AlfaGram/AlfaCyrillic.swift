@@ -21,7 +21,97 @@ public enum AlfaCyrillic {
     /// AlfaGram's own texts: converted while the Cyrillic interface is on.
     public static func ui(_ s: String) -> String {
         let text = AlfaStrings.tr(s)
-        return (AlfaSettings.cyrillicUi && AlfaStrings.lang == .uz) ? toCyrillic(text) : text
+        if AlfaStrings.lang == .uz {
+            if AlfaSettings.cyrillicUi {
+                return toCyrillic(text)
+            } else if AlfaSettings.newLatinUi {
+                return toNewLatin(text)
+            }
+        }
+        return text
+    }
+
+    // MARK: the new Uzbek Latin alphabet: sh → ş, ch → ç, o‘ → ö, g‘ → ğ (s‘h — the old separated s+h — → sh)
+
+    /// The current Uzbek Latin → the new one. Links, @names, tags and the like stay as they are.
+    public static func toNewLatin(_ input: String) -> String {
+        if input.isEmpty || !hasLatinLetters(input) {
+            return input
+        }
+        guard let regex = protectedPattern else {
+            return newLatinChunk(input)
+        }
+        let ns = input as NSString
+        var out = ""
+        var last = 0
+        for match in regex.matches(in: input, options: [], range: NSRange(location: 0, length: ns.length)) {
+            if match.range.location > last {
+                out += newLatinChunk(ns.substring(with: NSRange(location: last, length: match.range.location - last)))
+            }
+            out += ns.substring(with: match.range)
+            last = match.range.location + match.range.length
+        }
+        if last < ns.length {
+            out += newLatinChunk(ns.substring(from: last))
+        }
+        return out
+    }
+
+    private static func newLatinChunk(_ s: String) -> String {
+        let chars = Array(s)
+        var out = ""
+        var i = 0
+        while i < chars.count {
+            let c = chars[i]
+            let lc = lower(c) ?? c
+            let upper = c != lc
+            let next: Character? = i + 1 < chars.count ? chars[i + 1] : nil
+            let nextLower = lower(next)
+            // the next letter decides whether a digraph is all caps (SH → Ş, Sh → Ş)
+            if lc == "s" && isApostrophe(next) && i + 2 < chars.count && lower(chars[i + 2]) == "h" {
+                // Is‘hoq: the apostrophe only kept s and h apart — in the new alphabet that is plain "sh"
+                out.append(c)
+                out.append(chars[i + 2])
+                i += 3
+                continue
+            }
+            if lc == "s" && nextLower == "h" {
+                out += upper ? "Ş" : "ş"
+                i += 2
+                continue
+            }
+            if lc == "c" && nextLower == "h" {
+                out += upper ? "Ç" : "ç"
+                i += 2
+                continue
+            }
+            if (lc == "o" || lc == "g") && isApostrophe(next) {
+                if lc == "o" {
+                    out += upper ? "Ö" : "ö"
+                } else {
+                    out += upper ? "Ğ" : "ğ"
+                }
+                i += 2
+                continue
+            }
+            out.append(c)
+            i += 1
+        }
+        return out
+    }
+
+    /// Converts every value of a localization table to the new Latin (dates' format patterns keep their letters).
+    public static func convertLocalizationToNewLatin(_ dict: [String: String]) -> [String: String] {
+        var result: [String: String] = [:]
+        result.reserveCapacity(dict.count)
+        for (key, value) in dict {
+            if key.hasPrefix("Time.") || key.contains("DateFormat") || key.contains("Formatter") {
+                result[key] = value
+            } else {
+                result[key] = toNewLatin(value)
+            }
+        }
+        return result
     }
 
     public static func hasCyrillic(_ s: String) -> Bool {

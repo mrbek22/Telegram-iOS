@@ -2,6 +2,8 @@ import Foundation
 import UIKit
 import TelegramCore
 import TelegramPresentationData
+import AnimatedStickerNode
+import TelegramAnimatedStickerNode
 
 /// AlfaGram: «Log in with a bot token» — a full screen: a robot, a title, a short note, a rounded token field and a
 /// wide button. `submit` gets the token and calls back with an error text, or nil once the login went through.
@@ -11,7 +13,8 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
 
     private let scrollView = UIScrollView()
     private let backButton = UIButton(type: .system)
-    private let robotLabel = UILabel()
+    /// The animated robot (Noto Emoji 🤖, bundled as AlfaRobot.tgs).
+    private let robotNode: AnimatedStickerNode = DefaultAnimatedStickerNodeImpl()
     private let titleLabel = UILabel()
     private let noteLabel = UILabel()
     private let tokenField = UITextField()
@@ -50,10 +53,9 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.backButton.addTarget(self, action: #selector(self.backPressed), for: .touchUpInside)
         self.view.addSubview(self.backButton)
 
-        self.robotLabel.text = "🤖"
-        self.robotLabel.font = UIFont.systemFont(ofSize: 88.0)
-        self.robotLabel.textAlignment = .center
-        self.scrollView.addSubview(self.robotLabel)
+        self.robotNode.setup(source: AnimatedStickerNodeLocalFileSource(name: "AlfaRobot"), width: 240, height: 240, playbackMode: .loop, mode: .direct(cachePathPrefix: nil))
+        self.robotNode.visibility = true
+        self.scrollView.addSubview(self.robotNode.view)
 
         self.titleLabel.text = AlfaCyrillic.ui("Bot token bilan kirish")
         self.titleLabel.font = UIFont.systemFont(ofSize: 28.0, weight: .bold)
@@ -131,7 +133,9 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.scrollView.frame = CGRect(x: 0.0, y: top, width: bounds.width, height: bounds.height - top)
 
         var y: CGFloat = 32.0
-        self.robotLabel.frame = CGRect(x: left, y: y, width: width, height: 100.0)
+        let robotSide: CGFloat = 110.0
+        self.robotNode.frame = CGRect(x: floor((bounds.width - robotSide) / 2.0), y: y - 5.0, width: robotSide, height: robotSide)
+        self.robotNode.updateLayout(size: CGSize(width: robotSide, height: robotSide))
         y += 100.0 + 24.0
         let titleHeight = self.titleLabel.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
         self.titleLabel.frame = CGRect(x: left, y: y, width: width, height: titleHeight)

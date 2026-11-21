@@ -142,6 +142,9 @@ public func alfaCyrillicDict(_ dict: [String: String], languageCode: String) -> 
     if AlfaSettings.cyrillicUi && languageCode.lowercased().hasPrefix("uz") {
         return AlfaCyrillic.convertLocalization(dict)
     }
+    if AlfaSettings.newLatinUi && languageCode.lowercased().hasPrefix("uz") {
+        return AlfaCyrillic.convertLocalizationToNewLatin(dict)
+    }
     return dict
 }
 

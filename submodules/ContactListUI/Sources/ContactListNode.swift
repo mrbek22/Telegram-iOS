@@ -245,7 +245,12 @@ private enum ContactListNodeEntry: Comparable, Identifiable {
                 if case .blocks = listStyle, let id = header?.id.id.base as? Int64 {
                     sectionId = Int32(clamping: id)
                 }
-                return ContactsPeerItem(presentationData: ItemListPresentationData(presentationData), style: listStyle, systemStyle: .glass, sectionId: listStyle == .blocks ? sectionId : 0, sortOrder: nameSortOrder, displayOrder: nameDisplayOrder, context: context, peerMode: isSearch ? .generalSearch(isSavedMessages: false) : .peer, peer: itemPeer, status: status, requiresPremiumForMessaging: requiresPremiumForMessaging, enabled: enabled, selection: selection, selectionPosition: .left, editing: ContactsPeerItemEditing(editable: false, editing: false, revealed: false), additionalActions: additionalActions, index: nil, header: listStyle == .blocks ? nil : header, action: { _ in
+                // AlfaGram: a mutual contact gets the two-people mark at the right (as on Android).
+                var alfaMutualIcon: UIImage?
+                if case let .peer(itemEnginePeer, _) = itemPeer, case let .user(itemUser)? = itemEnginePeer, itemUser.flags.contains(.mutualContact) {
+                    alfaMutualIcon = UIImage(bundleImageName: "Chat List/Filters/Group")
+                }
+                return ContactsPeerItem(presentationData: ItemListPresentationData(presentationData), style: listStyle, systemStyle: .glass, sectionId: listStyle == .blocks ? sectionId : 0, sortOrder: nameSortOrder, displayOrder: nameDisplayOrder, context: context, peerMode: isSearch ? .generalSearch(isSavedMessages: false) : .peer, peer: itemPeer, status: status, alfaRightIcon: alfaMutualIcon, requiresPremiumForMessaging: requiresPremiumForMessaging, enabled: enabled, selection: selection, selectionPosition: .left, editing: ContactsPeerItemEditing(editable: false, editing: false, revealed: false), additionalActions: additionalActions, index: nil, header: listStyle == .blocks ? nil : header, action: { _ in
                         interaction.openPeer(peer, .generic, nil, nil)
                 }, disabledAction: { _ in
                     if case let .peer(peer, _, _) = peer {

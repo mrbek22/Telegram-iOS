@@ -13,6 +13,7 @@ import AccountContext
 import AlertUI
 import PresentationDataUtils
 import UndoUI
+import AlfaGramUI
 import TelegramNotices
 import SearchUI
 import DeleteChatPeerActionSheetItem
@@ -378,7 +379,15 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
         if case let .chatList(alfaGroupId) = self.location, alfaGroupId == .root {
             AlfaOnlineLog.startPolling(account: context.account)
             AlfaChatListGreeting.shared.attach(context: context)
+            // AlfaGram: holding the «Chats» title opens (or hides again) the hidden chats.
+            self.alfaHiddenChatsObservers.append(NotificationCenter.default.addObserver(forName: AlfaHiddenChats.revealRequestNotification, object: nil, queue: .main, using: { [weak self] _ in
+                self?.alfaToggleHiddenChats()
+            }))
         }
+        // AlfaGram: a chat was hidden or the hidden chats were revealed — every tab redraws.
+        self.alfaHiddenChatsObservers.append(NotificationCenter.default.addObserver(forName: AlfaHiddenChats.didChangeNotification, object: nil, queue: .main, using: { [weak self] _ in
+            self?.alfaRefreshAllTabs()
+        }))
 
         self.tabBarItemContextActionType = .always
         self.automaticallyControlPresentationContextLayout = false
@@ -887,6 +896,9 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     }
     
     deinit {
+        for observer in self.alfaHiddenChatsObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
         self.openMessageFromSearchDisposable.dispose()
         self.badgeDisposable?.dispose()
         self.badgeIconDisposable?.dispose()
@@ -1056,6 +1068,12 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
             f(.default)
             self?.chatListDisplayNode.effectiveContainerNode.currentItemNode.alfaScrollToBottom()
         })))
+        if AlfaHiddenChats.isEnabled {
+            items.append(.action(ContextMenuActionItem(text: AlfaHiddenChats.isRevealed ? ui("Yashirin chatlarni yashirish") : ui("Yashirin chatlar"), icon: icon(AlfaHiddenChats.isRevealed ? "eye.slash" : "eye"), action: { [weak self] _, f in
+                f(.default)
+                self?.alfaToggleHiddenChats()
+            })))
+        }
 
         let contextController = makeContextController(presentationData: presentationData, source: .reference(HeaderContextReferenceContentSource(controller: self, sourceView: sourceView)), items: .single(ContextController.Items(content: .list(items))), gesture: nil)
         self.presentInGlobalOverlay(contextController)
@@ -1089,6 +1107,51 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     }
 
     /// AlfaGram: re-lays out the visible chat rows (after a chat was locked or unlocked).
+    private var alfaHiddenChatsObservers: [NSObjectProtocol] = []
+
+    /// AlfaGram: shows the hidden chats after their code, or hides them again.
+    func alfaToggleHiddenChats() {
+        guard self.isNodeLoaded, self.view.window != nil else {
+            return
+        }
+        let presentationData = self.presentationData
+        let showInfo: (String) -> Void = { [weak self] text in
+            self?.present(UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: text, timeout: 3.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: true, action: { _ in
+                return false
+            }), in: .current)
+        }
+        if !AlfaHiddenChats.isEnabled {
+            showInfo(AlfaCyrillic.ui("Yashirin chatlar yoqilmagan: Sozlamalar → AlfaGram → «Yashirin chatlar»"))
+            return
+        }
+        if AlfaHiddenChats.isRevealed {
+            AlfaHiddenChats.setRevealed(false)
+            showInfo(AlfaCyrillic.ui("Yashirin chatlar yana yashirildi"))
+            return
+        }
+        AlfaHiddenChatsUI.askCode(from: self, title: AlfaCyrillic.ui("Yashirin chatlar"), completion: { success in
+            if success {
+                AlfaHiddenChats.setRevealed(true)
+                showInfo(AlfaCyrillic.ui("Yashirin chatlar ko'rsatildi. Yana yashirish uchun sarlavhani bosib turing"))
+            }
+        })
+    }
+
+    /// AlfaGram: every loaded tab (not only the current one) rebuilds its rows.
+    func alfaRefreshAllTabs() {
+        guard self.isNodeLoaded else {
+            return
+        }
+        self.chatListDisplayNode.mainContainerNode.alfaForEachListNode { listNode in
+            listNode.updateState { state in
+                var state = state
+                let current = state.presentationData
+                state.presentationData = ChatListPresentationData(theme: current.theme, fontSize: current.fontSize, strings: current.strings, dateTimeFormat: current.dateTimeFormat, nameSortOrder: current.nameSortOrder, nameDisplayOrder: current.nameDisplayOrder, disableAnimations: current.disableAnimations)
+                return state
+            }
+        }
+    }
+
     func alfaRefreshRows() {
         self.chatListDisplayNode.effectiveContainerNode.currentItemNode.updateState { state in
             var state = state
@@ -4337,7 +4400,16 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
                     selectedEntryId = .all
                 }
             }
-            let filtersLimit = isPremium == false ? limits.maxFoldersCount : nil
+            // AlfaGram: the local tabs (after the account's folders) are not folders — they never count against
+            // the free folder limit.
+            let alfaLocalCount = Int32(resolvedItems.count(where: { item in
+                if case let .filter(id, _, _) = item, AlfaLocalTabs.isLocal(id) {
+                    return true
+                } else {
+                    return false
+                }
+            }))
+            let filtersLimit = isPremium == false ? limits.maxFoldersCount + alfaLocalCount : nil
             strongSelf.tabContainerData = (resolvedItems, false, filtersLimit)
             var availableFilters: [ChatListContainerNodeFilter] = []
             var hasAllChats = false

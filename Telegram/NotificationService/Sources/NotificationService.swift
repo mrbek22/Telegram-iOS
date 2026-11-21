@@ -550,6 +550,11 @@ private struct NotificationContent: CustomStringConvertible {
             hidden.alfaChecked = true
             return hidden
         }
+        if AlfaHiddenChats.isHidden(accountPeerId: accountPeerId, peerId: PeerId(peerIdValue)) {
+            var hidden = NotificationContent(isLockedMessage: nil)
+            hidden.alfaChecked = true
+            return hidden
+        }
         if AlfaChatLock.isLocked(accountPeerId: accountPeerId, peerId: PeerId(peerIdValue)) {
             var locked = self
             locked.alfaChecked = true

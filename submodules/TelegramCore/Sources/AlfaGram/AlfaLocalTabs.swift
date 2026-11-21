@@ -3,8 +3,7 @@ import Postbox
 import SwiftSignalKit
 
 /// AlfaGram: automatic chat list tabs (Personal / Mutual contacts / Groups / Channels / Bots) that live only on
-/// this device. They are never written to the account's folders, and they are shown only while the user has no
-/// folders of their own — as soon as the account has a real folder, the user's folders are shown untouched.
+/// this device. They are never written to the account's folders; they follow the user's own folders (if any).
 public enum AlfaLocalTabs {
     /// Local tab ids: far outside the server's folder id range (2…255).
     public static let personalId: Int32 = 1_000_001
@@ -98,14 +97,12 @@ public enum AlfaLocalTabs {
     }
 }
 
-/// Adds the local tabs to the account's chat list filters while the account has no folders of its own.
+/// Adds the local tabs after the account's chat list filters — also when the account has folders of its own
+/// (user 2026-11-21: a new account with one «Ad» folder had no People / Groups / Channels / Bots tabs).
 func alfaWithLocalChatListTabs(postbox: Postbox, _ filters: Signal<[ChatListFilter], NoError>) -> Signal<[ChatListFilter], NoError> {
     let _ = postbox
     return filters
     |> map { filters -> [ChatListFilter] in
-        if AlfaLocalTabs.hasOwnFolders(filters) {
-            return filters
-        }
         var result = filters
         if !result.contains(where: { if case .allChats = $0 { return true } else { return false } }) {
             result.insert(.allChats, at: 0)

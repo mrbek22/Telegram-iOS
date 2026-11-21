@@ -5,6 +5,7 @@ import ComponentFlow
 import ComponentDisplayAdapters
 import TelegramPresentationData
 import AccountContext
+import TelegramCore
 import ChatListTitleView
 import NavigationBarComponent
 
@@ -52,6 +53,12 @@ final class ChatListTitleComponent: Component {
     }
 
     final class View: UIView {
+        @objc private func alfaTitleLongPressed(_ recognizer: UILongPressGestureRecognizer) {
+            if recognizer.state == .began {
+                NotificationCenter.default.post(name: AlfaHiddenChats.revealRequestNotification, object: nil)
+            }
+        }
+
         private(set) var titleView: ChatListTitleView?
         private var component: ChatListTitleComponent?
 
@@ -76,6 +83,10 @@ final class ChatListTitleComponent: Component {
                 titleView.manualLayout = true
                 self.titleView = titleView
                 self.addSubview(titleView)
+                // AlfaGram: holding the title opens the hidden chats (after their code).
+                let alfaLongPress = UILongPressGestureRecognizer(target: self, action: #selector(self.alfaTitleLongPressed(_:)))
+                alfaLongPress.minimumPressDuration = 0.6
+                titleView.addGestureRecognizer(alfaLongPress)
             }
 
             titleView.theme = component.theme

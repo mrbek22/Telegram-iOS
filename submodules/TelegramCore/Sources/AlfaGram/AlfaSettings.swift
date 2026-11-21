@@ -32,6 +32,10 @@ public enum AlfaSettings {
         case cyrillicUi
         /// Text typed in Latin is sent in Cyrillic.
         case sendCyrillic
+        /// Uzbek interface in the new Latin alphabet (ş ç ö ğ).
+        case newLatinUi
+        /// Text typed in the current Latin is sent in the new Latin alphabet.
+        case sendNewLatin
         /// Saving and forwarding from chats that restrict it.
         case unrestrictedSave
         /// The stories row above the chat list is not shown.
@@ -53,7 +57,7 @@ public enum AlfaSettings {
                 return true
             case .roundVideoAsk, .keepSelfDestructing, .confirmCalls:
                 return true
-            case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .hideStories, .silentSend, .roundVideoBackCamera:
+            case .ghostOnline, .ghostTyping, .ghostRead, .cyrillicUi, .sendCyrillic, .newLatinUi, .sendNewLatin, .hideStories, .silentSend, .roundVideoBackCamera:
                 return false
             }
         }
@@ -148,6 +152,14 @@ public enum AlfaSettings {
 
     public static var sendCyrillic: Bool {
         return value(.sendCyrillic)
+    }
+
+    public static var newLatinUi: Bool {
+        return value(.newLatinUi)
+    }
+
+    public static var sendNewLatin: Bool {
+        return value(.sendNewLatin)
     }
 
     public static var hideStories: Bool {

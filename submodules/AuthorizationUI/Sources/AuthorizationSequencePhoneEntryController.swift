@@ -152,10 +152,9 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
             completion(AlfaCyrillic.ui("Token noto'g'ri. U 123456789:ABCdef... ko'rinishida bo'ladi."))
             return
         }
-        self.inProgress = true
+        // The bot login screen shows its own progress; the phone screen underneath stays as it is.
         let _ = (alfaAuthorizeWithBotToken(accountManager: self.sharedContext.accountManager, account: account, token: token, apiId: self.apiId, apiHash: self.apiHash)
-        |> deliverOnMainQueue).start(error: { [weak self] error in
-            self?.inProgress = false
+        |> deliverOnMainQueue).start(error: { error in
             switch error {
             case .invalidToken:
                 completion(AlfaCyrillic.ui("Token noto'g'ri yoki bekor qilingan."))
@@ -164,8 +163,7 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
             case let .generic(description):
                 completion(AlfaCyrillic.ui("Kirib bo'lmadi") + (description.isEmpty ? "" : ": " + description))
             }
-        }, completed: { [weak self] in
-            self?.inProgress = false
+        }, completed: {
             completion(nil)
         })
     }

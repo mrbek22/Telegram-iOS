@@ -283,6 +283,11 @@ extension ChatControllerImpl {
                 if "".isEmpty {
                     availableButtons.insert(.audio, at: max(0, availableButtons.count - 1))
                 }
+
+                // AlfaGram: any gallery video as a round video message, right after the gallery.
+                if banSendText == nil {
+                    availableButtons.insert(.alfaRoundVideo, at: 1)
+                }
             }
             
             let presentationData = self.presentationData
@@ -1060,6 +1065,13 @@ extension ChatControllerImpl {
                             }
                         }
                         return true
+                    case .alfaRoundVideo:
+                        // The attachment sheet closes; the system picker opens over the chat.
+                        strongSelf.attachmentController?.dismiss(animated: true)
+                        Queue.mainQueue().after(0.4, { [weak strongSelf] in
+                            strongSelf?.alfaPickGalleryRoundVideo()
+                        })
+                        return false
                     case .quickReply:
                         let _ = (strongSelf.context.sharedContext.makeQuickReplySetupScreenInitialData(context: strongSelf.context)
                                  |> take(1)

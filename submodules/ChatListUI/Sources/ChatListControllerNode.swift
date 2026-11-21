@@ -134,6 +134,13 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
     public var currentItemNode: ChatListNode {
         return self.currentItemNodeValue!.listNode
     }
+
+    /// AlfaGram: every loaded tab's list.
+    func alfaForEachListNode(_ f: (ChatListNode) -> Void) {
+        for (_, itemNode) in self.itemNodes {
+            f(itemNode.listNode)
+        }
+    }
     
     private let currentItemStateValue = Promise<(state: ChatListNodeState, filterId: Int32?)>()
     var currentItemState: Signal<(state: ChatListNodeState, filterId: Int32?), NoError> {
@@ -554,7 +561,15 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
             guard let self, self.availableFilters.count > 1 || (self.controller?.isStoryPostingAvailable == true && !(self.context.sharedContext.callManager?.hasActiveCall ?? false)) else {
                 return []
             }
-            guard case .chatList(.root) = self.location else {
+            // AlfaGram: the archive's tabs swipe like the main list's; on its first tab a right swipe still goes back.
+            var isArchive = false
+            if case .chatList(.archive) = self.location {
+                isArchive = true
+            } else if case .chatList(.root) = self.location {
+            } else {
+                return []
+            }
+            if isArchive && self.availableFilters.count <= 1 {
                 return []
             }
             switch self.currentItemNode.visibleContentOffset() {
@@ -574,6 +589,9 @@ public final class ChatListContainerNode: ASDisplayNode, ASGestureRecognizerDele
                 } else if self.availableFilters.first?.id == self.selectedId {
                     return [.leftCenter]
                 }
+            }
+            if isArchive && self.availableFilters.first?.id == self.selectedId {
+                return [.leftCenter]
             }
             if self.availableFilters.count > 1 {
                 return [.leftCenter, .rightCenter]

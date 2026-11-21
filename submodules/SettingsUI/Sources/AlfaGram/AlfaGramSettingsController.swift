@@ -18,6 +18,7 @@ private enum AlfaGramSettingsAction: Equatable {
     case helpGroup
     case autoFolders
     case hiddenAccounts
+    case hiddenChats
     case about
     case roundVideoCamera
 }
@@ -154,6 +155,8 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
 
     entries.append(.header(9, next(), ui("MAXFIYLIK")))
     entries.append(.action(9, next(), .hiddenAccounts, ui("Maxfiy akkauntlar"), "person.crop.circle.badge.xmark", 0x007aff))
+    entries.append(.choice(9, next(), .hiddenChats, ui("Yashirin chatlar"), AlfaHiddenChats.isEnabled ? ui("Yoqilgan") : ui("O'chiq"), "eye.slash.fill", 0xaf52de))
+    entries.append(.info(9, next(), ui("Yashirin chatlar asosiy ro'yxatdan yo'qoladi va ovozsiz bo'ladi. Chatni bosib turing → «Chatni yashirish». Ularni ko'rish uchun «Chatlar» sarlavhasini bosib turing va kodni kiriting.")))
     entries.append(.info(9, next(), ui("Chatni qulflash: chatlar ro'yxatida chatni bosib turing → «Chatni qulflash». Qulflangan chat Face ID yoki telefon paroli bilan ochiladi va xabarlari ro'yxatda ko'rinmaydi.")))
 
     entries.append(.header(6, next(), ui("CHEKLOVSIZ")))
@@ -164,6 +167,8 @@ private func alfaGramSettingsEntries() -> [AlfaGramSettingsEntry] {
     entries.append(.header(4, next(), ui("TIL")))
     entries.append(.toggle(4, next(), .cyrillicUi, ui("Kirill alifbosi (Ўзбекча)"), ui("O'zbek tili tanlanganda ilova kirillda"), "character.book.closed.fill", 0x30b8a8, AlfaSettings.cyrillicUi))
     entries.append(.toggle(4, next(), .sendCyrillic, ui("Lotincha yozsam, kirillda yuborilsin"), ui("Lotincha matn kirillga o'girib yuboriladi"), "character.cursor.ibeam", 0x007aff, AlfaSettings.sendCyrillic))
+    entries.append(.toggle(4, next(), .newLatinUi, ui("Yangi alifbo (Ş Ç Ö Ğ)"), ui("O'zbek tili tanlanganda ilova yangi lotin alifbosida"), "textformat.abc", 0x34c759, AlfaSettings.newLatinUi))
+    entries.append(.toggle(4, next(), .sendNewLatin, ui("Yangi alifboda yuborilsin"), ui("sh, ch, o', g' → ş, ç, ö, ğ bo'lib ketadi"), "character.cursor.ibeam", 0x5856d6, AlfaSettings.sendNewLatin))
     entries.append(.info(4, next(), ui("O'zbek tili tanlangan bo'lsa, ilova kirillda ko'rinadi. Tilni Sozlamalar → Til bo'limidan tanlang.")))
 
     entries.append(.action(10, next(), .about, ui("AlfaGram haqida"), "info.circle.fill", 0x2563eb))
@@ -265,6 +270,7 @@ public func alfaHiddenAccountsController(context: AccountContext) -> ViewControl
 public func alfaGramSettingsController(context: AccountContext) -> ViewController {
     let revisionPromise = ValuePromise<Int32>(0, ignoreRepeated: false)
     var pushImpl: ((ViewController) -> Void)?
+    var alfaControllerImpl: (() -> ViewController?)?
     var openHelpImpl: (() -> Void)?
     var presentAlertImpl: ((String) -> Void)?
     var presentRoundVideoCameraImpl: (() -> Void)?
@@ -274,7 +280,17 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
         if key == .onlineLog && value {
             AlfaOnlineLog.startPolling(account: context.account)
         }
-        if key == .cyrillicUi {
+        // AlfaGram: one script at a time — Cyrillic or the new Latin.
+        if value && key == .cyrillicUi {
+            AlfaSettings.setValue(.newLatinUi, false)
+        } else if value && key == .newLatinUi {
+            AlfaSettings.setValue(.cyrillicUi, false)
+        } else if value && key == .sendCyrillic {
+            AlfaSettings.setValue(.sendNewLatin, false)
+        } else if value && key == .sendNewLatin {
+            AlfaSettings.setValue(.sendCyrillic, false)
+        }
+        if key == .cyrillicUi || key == .newLatinUi {
             let languageCode = context.sharedContext.currentPresentationData.with { $0 }.strings.primaryComponent.languageCode
             let _ = context.engine.localization.downloadAndApplyLocalization(accountManager: context.sharedContext.accountManager, languageCode: languageCode).start()
         }
@@ -293,6 +309,12 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
             pushImpl?(alfaAboutController(context: context))
         case .roundVideoCamera:
             presentRoundVideoCameraImpl?()
+        case .hiddenChats:
+            if let controller = alfaControllerImpl?() {
+                AlfaHiddenChatsUI.manage(from: controller, completion: {
+                    revisionPromise.set(0)
+                })
+            }
         case .hiddenAccounts:
             AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { success in
                 if success {
@@ -318,6 +340,9 @@ public func alfaGramSettingsController(context: AccountContext) -> ViewControlle
     }
 
     let controller = ItemListController(context: context, state: signal)
+    alfaControllerImpl = { [weak controller] in
+        return controller
+    }
     pushImpl = { [weak controller] c in
         controller?.push(c)
     }

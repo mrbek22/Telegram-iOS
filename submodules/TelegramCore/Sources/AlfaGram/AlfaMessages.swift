@@ -185,7 +185,7 @@ func alfaSilentOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
 }
 
 func alfaCyrillicOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
-    guard AlfaSettings.sendCyrillic, case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message else {
+    guard AlfaSettings.sendCyrillic || AlfaSettings.sendNewLatin, case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets) = message else {
         return message
     }
     if text.isEmpty || !AlfaCyrillic.hasLatinLetters(text) {
@@ -196,5 +196,6 @@ func alfaCyrillicOutgoing(_ message: EnqueueMessage) -> EnqueueMessage {
             return message
         }
     }
-    return .message(text: AlfaCyrillic.toCyrillic(text), attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+    let converted = AlfaSettings.sendCyrillic ? AlfaCyrillic.toCyrillic(text) : AlfaCyrillic.toNewLatin(text)
+    return .message(text: converted, attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
 }

@@ -2056,8 +2056,9 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     func handleDidEnterBackground() {
-        // AlfaGram: locked chats ask again after the app was in the background.
+        // AlfaGram: locked chats ask again after the app was in the background; hidden chats hide again.
         AlfaChatLock.relockAll()
+        AlfaHiddenChats.setRevealed(false)
         let _ = (self.sharedContextPromise.get()
         |> take(1)
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in

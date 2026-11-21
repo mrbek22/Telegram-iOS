@@ -31,6 +31,16 @@ private struct AlfaAboutFeature {
 
 private func alfaAboutFeatures() -> [AlfaAboutFeature] {
     return [
+    AlfaAboutFeature(symbol: "textformat.abc", color: 0x34c759,
+        title: AlfaText(uz: "Yangi alifbo (Ş Ç Ö Ğ)", en: "New Uzbek alphabet (Ş Ç Ö Ğ)", ru: "Новый узбекский алфавит (Ş Ç Ö Ğ)"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «Yangi alifbo» (ilova matnlari) va «Yangi alifboda yuborilsin» (xabarlar).", en: "Settings → AlfaGram → «New alphabet» (the app's texts) and «Send in the new alphabet» (messages).", ru: "Настройки → AlfaGram → «Новый алфавит» (тексты приложения) и «Отправлять на новом алфавите» (сообщения)."),
+        how: AlfaText(uz: "sh, ch, o', g' → ş, ç, ö, ğ. Siz odatdagidek yozasiz, xabar yangi alifboda ketadi. Havola, @username va teglar o'zgarmaydi. Kirill bilan bir vaqtda faqat bittasi yoqiladi.", en: "sh, ch, o', g' → ş, ç, ö, ğ. You type as usual; the message goes in the new alphabet. Links, @usernames and tags stay as they are. Only one of Cyrillic and the new alphabet is on at a time.", ru: "sh, ch, o', g' → ş, ç, ö, ğ. Вы пишете как обычно, сообщение уходит на новом алфавите. Ссылки, @username и теги не меняются. Кириллица и новый алфавит — только что-то одно."),
+        disable: AlfaText(uz: "O'sha bandlarni o'chiring.", en: "Turn those switches off.", ru: "Выключите эти переключатели.")),
+    AlfaAboutFeature(symbol: "eye.slash.fill", color: 0xaf52de,
+        title: AlfaText(uz: "Yashirin chatlar", en: "Hidden chats", ru: "Скрытые чаты"),
+        enable: AlfaText(uz: "Sozlamalar → AlfaGram → «Yashirin chatlar»: qulf turini (4 raqamli PIN yoki parol) tanlab kod qo'ying. Keyin chatni bosib turing → «Chatni yashirish».", en: "Settings → AlfaGram → «Hidden chats»: pick the lock type (a 4-digit PIN or a password) and set the code. Then hold a chat → «Hide chat».", ru: "Настройки → AlfaGram → «Скрытые чаты»: выберите тип блокировки (4-значный PIN или пароль) и задайте код. Затем удерживайте чат → «Скрыть чат»."),
+        how: AlfaText(uz: "Yashirilgan chat ro'yxatdan va uzatish oynasidan yo'qoladi, ovozsiz bo'ladi, bildirishnoma kelmaydi. Ko'rish uchun «Chatlar» sarlavhasini bosib turing va kodni kiriting; ilovadan chiqsangiz, yana yashirinadi.", en: "A hidden chat disappears from the list and the forward picker, is muted and sends no notifications. To see it, hold the «Chats» title and enter the code; leaving the app hides it again.", ru: "Скрытый чат исчезает из списка и окна пересылки, без звука и уведомлений. Чтобы увидеть, удерживайте заголовок «Чаты» и введите код; после выхода из приложения он снова скрыт."),
+        disable: AlfaText(uz: "Chatni bosib turing → «Yashirishdan chiqarish», yoki sozlamada kod bilan «O'chirish».", en: "Hold the chat → «Unhide», or turn it off in the settings with the code.", ru: "Удерживайте чат → «Не скрывать» или выключите в настройках с кодом.")),
     AlfaAboutFeature(symbol: "eye.slash.fill", color: 0x8e8e93,
         title: AlfaText(uz: "Ghost rejim", en: "Ghost Mode", ru: "Режим призрака"),
         enable: AlfaText(uz: "Chatlar ro'yxati tepasidagi ko'z belgisini bosing yoki Sozlamalar → AlfaGram → Ghost rejim bo'limida kerakli bandlarni yoqing.", en: "Tap the eye at the top of the chat list, or turn on the switches in Settings → AlfaGram → Ghost Mode.", ru: "Нажмите на глаз вверху списка чатов или включите переключатели в Настройки → AlfaGram → Режим призрака."),
@@ -128,8 +138,8 @@ private func alfaAboutFeatures() -> [AlfaAboutFeature] {
         disable: AlfaText(uz: "O'sha bandni o'chiring.", en: "Turn the same switch off.", ru: "Выключите тот же переключатель.")),
     AlfaAboutFeature(symbol: "video.badge.plus", color: 0xff9500,
         title: AlfaText(uz: "Galereyadan dumaloq video", en: "Round video from the gallery", ru: "Видеосообщение из галереи"),
-        enable: AlfaText(uz: "Dumaloq video tugmasini bosib turing → «Galereyadan video» (kamerani «Har safar so'rash» rejimida).", en: "Hold the round video button → «Video from gallery» (with the camera set to «Ask every time»).", ru: "Удерживайте кнопку видеосообщения → «Видео из галереи» (в режиме «Спрашивать каждый раз»)."),
-        how: AlfaText(uz: "Tanlangan video o'rtasidan kvadrat qilib qirqiladi, 1 daqiqagacha qisqartiriladi va dumaloq video bo'lib yuboriladi.", en: "The chosen video is cropped to a centered square, trimmed to 1 minute and sent as a round video.", ru: "Выбранное видео обрезается до квадрата по центру, до 1 минуты, и отправляется кружком."),
+        enable: AlfaText(uz: "Chatda 📎 → «Dumaloq video» → videoni tanlang. «Har safar so'rash» rejimida dumaloq video tugmasini bosib turib «Galereyadan video» ham bor.", en: "In a chat: 📎 → «Round video» → pick a video. In «Ask every time» mode, holding the round video button also offers «Video from gallery».", ru: "В чате: 📎 → «Видеосообщение» → выберите видео. В режиме «Спрашивать каждый раз» удержание кнопки видеосообщения тоже предлагает «Видео из галереи»."),
+        how: AlfaText(uz: "1 daqiqagacha bo'lgan video o'rtasidan kvadrat qilib qirqiladi va dumaloq video bo'lib yuboriladi. Uzunroq video qabul qilinmaydi.", en: "A video up to 1 minute long is cropped to a centered square and sent as a round video. Longer videos are not accepted.", ru: "Видео до 1 минуты обрезается до квадрата по центру и отправляется кружком. Более длинные видео не принимаются."),
         disable: nil),
     AlfaAboutFeature(symbol: "checkmark.circle.fill", color: 0x34c759,
         title: AlfaText(uz: "Hammasini belgilash", en: "Select all", ru: "Выбрать все"),

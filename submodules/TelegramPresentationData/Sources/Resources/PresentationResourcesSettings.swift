@@ -135,6 +135,25 @@ public struct PresentationResourcesSettings {
     
     public static let birthday = renderSettingsIcon(name: "Item List/Icons/Cake", backgroundColors: [colorBlue])
     public static let aiTools = renderSettingsIcon(name: "Item List/Icons/AITools", backgroundColors: [colorPurple])
+
+    /// AlfaGram: the app's own logo (the blue «A») as a settings tile.
+    public static let alfaGram: UIImage? = generateImage(CGSize(width: 30.0, height: 30.0), rotatedContext: { size, context in
+        let bounds = CGRect(origin: CGPoint(), size: size)
+        context.clear(bounds)
+        context.addPath(UIBezierPath(roundedRect: bounds, cornerRadius: 7.0).cgPath)
+        context.clip()
+        if let logo = UIImage(named: "AlfaLaunchLogo") {
+            // UIKit drawing keeps the logo upright in the rotated (UIKit-oriented) context.
+            UIGraphicsPushContext(context)
+            logo.draw(in: bounds.insetBy(dx: -1.0, dy: -1.0))
+            UIGraphicsPopContext()
+        } else {
+            context.setFillColor(colorBlue.cgColor)
+            context.fill(bounds)
+        }
+    })
+    /// AlfaGram: «My AlfaGram link» — a link on blue (not the red profile tile).
+    public static let alfaMyLink = renderSettingsIcon(name: "Item List/Icons/Link", backgroundColors: [colorBlue])
     public static let yourColor = renderSettingsIcon(name: "Item List/Icons/Brush", backgroundColors: [colorLightBlue])
     
     public static let storageUsage = renderSettingsIcon(name: "Item List/Icons/Pie", backgroundColors: [colorOrange])

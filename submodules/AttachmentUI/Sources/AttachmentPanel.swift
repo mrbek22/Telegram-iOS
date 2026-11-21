@@ -312,6 +312,9 @@ private final class AttachButtonComponent: CombinedComponent {
                 name = strings.Attachment_Article
                 animationName = "TabArticle"
                 imageName = ""
+            case .alfaRoundVideo:
+                name = AlfaCyrillic.ui("Dumaloq video")
+                imageName = "Chat/Input/Text/IconVideo"
             }
 
             let tintColor: UIColor
@@ -2303,6 +2306,8 @@ final class AttachmentPanel: ASDisplayNode, ASScrollViewDelegate, ASGestureRecog
                 accessibilityTitle = self.presentationData.strings.Attachment_Reply
             case .richText:
                 accessibilityTitle = self.presentationData.strings.Attachment_Article
+            case .alfaRoundVideo:
+                accessibilityTitle = AlfaCyrillic.ui("Dumaloq video")
             }
             buttonView.isAccessibilityElement = true
             buttonView.accessibilityLabel = accessibilityTitle

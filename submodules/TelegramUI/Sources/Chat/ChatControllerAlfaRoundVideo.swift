@@ -10,6 +10,7 @@ import TelegramPresentationData
 import PresentationDataUtils
 import AccountContext
 import OverlayStatusController
+import AlertUI
 
 /// AlfaGram: picks one video from the photo library and hands back a temporary copy of it.
 final class AlfaRoundVideoPickerDelegate: NSObject, PHPickerViewControllerDelegate {
@@ -58,6 +59,11 @@ private func alfaMakeRoundVideo(source: URL, completion: @escaping (URL?, Double
     let cropSide = min(width, height)
     if cropSide <= 0.0 {
         completion(nil, 0.0)
+        return
+    }
+    // Only videos up to a minute become round (user 2026-11-21): a longer one is not trimmed, it is refused.
+    if asset.duration.seconds > 60.5 {
+        completion(nil, -1.0)
         return
     }
     let duration = CMTimeMinimum(asset.duration, CMTime(seconds: 60.0, preferredTimescale: 600))
@@ -116,7 +122,15 @@ extension ChatControllerImpl {
             alfaMakeRoundVideo(source: url, completion: { [weak self, weak statusController] output, duration in
                 statusController?.dismiss()
                 let _ = try? FileManager.default.removeItem(at: url)
-                guard let self, let output, let data = try? Data(contentsOf: output) else {
+                guard let self else {
+                    return
+                }
+                if output == nil && duration < 0.0 {
+                    let presentationData = self.presentationData
+                    self.present(textAlertController(context: self.context, title: nil, text: AlfaCyrillic.ui("Video 1 daqiqadan uzun. Dumaloq video faqat 1 daqiqagacha bo'lgan videodan qilinadi."), actions: [TextAlertAction(type: .defaultAction, title: presentationData.strings.Common_OK, action: {})]), in: .window(.root))
+                    return
+                }
+                guard let output, let data = try? Data(contentsOf: output) else {
                     return
                 }
                 let _ = try? FileManager.default.removeItem(at: output)

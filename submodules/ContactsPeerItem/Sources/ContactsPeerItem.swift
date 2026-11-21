@@ -212,6 +212,8 @@ public class ContactsPeerItem: ItemListItem, ListViewItemWithHeader {
     let status: ContactsPeerItemStatus
     let badge: ContactsPeerItemBadge?
     let rightLabelText: LabelText?
+    /// AlfaGram: a small icon at the right edge (a template image, tinted with the accent color) — the mutual contact mark.
+    let alfaRightIcon: UIImage?
     let requiresPremiumForMessaging: Bool
     let enabled: Bool
     let selection: ContactsPeerItemSelection
@@ -273,6 +275,7 @@ public class ContactsPeerItem: ItemListItem, ListViewItemWithHeader {
         status: ContactsPeerItemStatus,
         badge: ContactsPeerItemBadge? = nil,
         rightLabelText: LabelText? = nil,
+        alfaRightIcon: UIImage? = nil,
         requiresPremiumForMessaging: Bool = false,
         enabled: Bool,
         selection: ContactsPeerItemSelection,
@@ -315,6 +318,7 @@ public class ContactsPeerItem: ItemListItem, ListViewItemWithHeader {
         self.status = status
         self.badge = badge
         self.rightLabelText = rightLabelText
+        self.alfaRightIcon = alfaRightIcon
         self.requiresPremiumForMessaging = requiresPremiumForMessaging
         self.enabled = enabled
         self.selection = selection
@@ -519,6 +523,8 @@ public class ContactsPeerItemNode: ItemListRevealOptionsItemNode {
     private var arrowButtonNode: HighlightableButtonNode?
     private let labelBadgeNode: ASImageNode
     private var rightLabelTextNode: TextNode?
+    private var alfaRightIconNode: ASImageNode?
+    private var alfaRightIconSource: (UIImage, UIColor)?
     
     private var adButton: HighlightableButtonNode?
     
@@ -1191,6 +1197,8 @@ public class ContactsPeerItemNode: ItemListRevealOptionsItemNode {
             
             if let rightLabelTextLayoutAndApply {
                 additionalTitleInset += rightLabelTextLayoutAndApply.0.size.width + 36.0
+            } else if item.alfaRightIcon != nil {
+                additionalTitleInset += 22.0 + 20.0
             }
             
             var titleBadgeText: String?
@@ -2014,6 +2022,44 @@ public class ContactsPeerItemNode: ItemListRevealOptionsItemNode {
                             } else if let rightLabelTextNode = strongSelf.rightLabelTextNode {
                                 strongSelf.rightLabelTextNode = nil
                                 rightLabelTextNode.removeFromSupernode()
+                            }
+
+                            // AlfaGram: the right edge icon (only where there is no right label).
+                            if let alfaIcon = item.alfaRightIcon, rightLabelTextLayoutAndApply == nil {
+                                let iconNode: ASImageNode
+                                if let current = strongSelf.alfaRightIconNode {
+                                    iconNode = current
+                                } else {
+                                    iconNode = ASImageNode()
+                                    iconNode.displaysAsynchronously = false
+                                    iconNode.isUserInteractionEnabled = false
+                                    strongSelf.alfaRightIconNode = iconNode
+                                    strongSelf.offsetContainerNode.addSubnode(iconNode)
+                                }
+                                let iconColor = item.presentationData.theme.list.itemAccentColor
+                                let iconSide: CGFloat = 22.0
+                                if strongSelf.alfaRightIconSource?.0 !== alfaIcon || strongSelf.alfaRightIconSource?.1 != iconColor {
+                                    strongSelf.alfaRightIconSource = (alfaIcon, iconColor)
+                                    iconNode.image = generateImage(CGSize(width: iconSide, height: iconSide), rotatedContext: { size, context in
+                                        context.clear(CGRect(origin: CGPoint(), size: size))
+                                        UIGraphicsPushContext(context)
+                                        alfaIcon.withTintColor(iconColor, renderingMode: .alwaysOriginal).draw(in: CGRect(origin: CGPoint(), size: size))
+                                        UIGraphicsPopContext()
+                                    })
+                                }
+                                let iconRightInset: CGFloat
+                                switch item.systemStyle {
+                                case .glass:
+                                    iconRightInset = 16.0
+                                case .legacy:
+                                    iconRightInset = 8.0
+                                }
+                                let iconFrame = CGRect(x: revealOffset + params.width - params.rightInset - iconRightInset - iconSide, y: floor((nodeLayout.contentSize.height - iconSide) / 2.0), width: iconSide, height: iconSide)
+                                transition.updateFrame(node: iconNode, frame: iconFrame)
+                            } else if let iconNode = strongSelf.alfaRightIconNode {
+                                strongSelf.alfaRightIconNode = nil
+                                strongSelf.alfaRightIconSource = nil
+                                iconNode.removeFromSupernode()
                             }
                             
                             if let updatedSelectionNode = updatedSelectionNode {

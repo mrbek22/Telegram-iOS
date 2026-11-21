@@ -37,6 +37,8 @@ public enum AttachmentButtonType: Equatable {
     case link
     case richText
     case standalone
+    /// AlfaGram: an ordinary gallery video sent as a round video message.
+    case alfaRoundVideo
 
     public var key: String {
         switch self {
@@ -72,6 +74,8 @@ public enum AttachmentButtonType: Equatable {
             return "richText"
         case .standalone:
             return "standalone"
+        case .alfaRoundVideo:
+            return "alfaRoundVideo"
         }
     }
 
@@ -169,6 +173,12 @@ public enum AttachmentButtonType: Equatable {
             }
         case .standalone:
             if case .standalone = rhs {
+                return true
+            } else {
+                return false
+            }
+        case .alfaRoundVideo:
+            if case .alfaRoundVideo = rhs {
                 return true
             } else {
                 return false

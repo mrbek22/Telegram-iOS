@@ -52,7 +52,8 @@ final class AlfaJSONFile<T: Codable> {
         self.saveScheduled = true
         self.lock.unlock()
         if schedule {
-            alfaLogsQueue.asyncAfter(deadline: .now() + 8.0, execute: { [weak self] in
+            // Coalesced: the online log is rewritten whole (it grows with the contacts), so at most twice a minute.
+            alfaLogsQueue.asyncAfter(deadline: .now() + 30.0, execute: { [weak self] in
                 self?.save()
             })
         }
@@ -216,8 +217,9 @@ public enum AlfaOnlineLog {
     private static let pollLock = NSLock()
     private static var pollTimers: [Int64: SwiftSignalKit.Timer] = [:]
 
-    /// Asks the server for the contacts' statuses every 45 s while the app runs: in ghost mode (or with the app
-    /// offline) the server does not push status updates, the poll still answers.
+    /// Asks the server for the contacts' statuses every 90 s while the app runs, only in ghost mode: then the
+    /// server does not push status updates. Otherwise it pushes them itself and a poll would only rewrite every
+    /// contact's presence (battery, and chat list redraws).
     public static func startPolling(account: Account) {
         let key = account.peerId.id._internalGetInt64Value()
         self.pollLock.lock()
@@ -225,8 +227,8 @@ public enum AlfaOnlineLog {
         if self.pollTimers[key] != nil {
             return
         }
-        let timer = SwiftSignalKit.Timer(timeout: 45.0, repeat: true, completion: { [weak account] in
-            guard let account = account, AlfaSettings.onlineLog else {
+        let timer = SwiftSignalKit.Timer(timeout: 90.0, repeat: true, completion: { [weak account] in
+            guard let account = account, AlfaSettings.onlineLog, AlfaSettings.ghostOnline else {
                 return
             }
             let _ = alfaPollContactStatuses(postbox: account.postbox, network: account.network, accountPeerId: account.peerId).start()

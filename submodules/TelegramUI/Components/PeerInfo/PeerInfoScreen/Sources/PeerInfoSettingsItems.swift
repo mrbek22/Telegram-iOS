@@ -262,10 +262,10 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
         notificationsWarning = false
     }
     // AlfaGram: its own block, high up (under «My Profile»).
-    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 7, text: "AlfaGram", icon: PresentationResourcesSettings.aiTools, action: {
+    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 7, text: "AlfaGram", icon: PresentationResourcesSettings.alfaGram, action: {
         interaction.openSettings(.alfaGram)
     }))
-    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 9, text: AlfaCyrillic.ui("Mening AlfaGram havolam"), icon: PresentationResourcesSettings.myProfile, action: {
+    items[.alfaGram]!.append(PeerInfoScreenDisclosureItem(id: 9, text: AlfaCyrillic.ui("Mening AlfaGram havolam"), icon: PresentationResourcesSettings.alfaMyLink, action: {
         interaction.openSettings(.alfaLink)
     }))
     items[.advanced]!.append(PeerInfoScreenDisclosureItem(id: 0, label: notificationsWarning ? .badge("!", presentationData.theme.list.itemDestructiveColor) : .none, text: presentationData.strings.Settings_NotificationsAndSounds, icon: PresentationResourcesSettings.notifications, labelAccessibilityText: notificationsWarning ? presentationData.strings.VoiceOver_TabBar_AttentionRequired : nil, action: {

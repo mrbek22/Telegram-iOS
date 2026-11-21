@@ -696,6 +696,10 @@ func chatListNodeEntriesForView(view: EngineChatList, state: ChatListNodeState, 
         if let peerId = peerId, state.pendingRemovalItemIds.contains(ChatListNodeState.ItemId(peerId: peerId, threadId: threadId)) {
             continue loop
         }
+        // AlfaGram: hidden chats are left out until they are revealed with their code.
+        if threadId == nil, let peerId, AlfaHiddenChats.isHiddenNow(accountPeerId: accountPeerId, peerId: peerId) {
+            continue loop
+        }
         var updatedMessages = entry.messages
         var updatedCombinedReadState = entry.readCounters
         if let peerId = peerId, state.pendingClearHistoryPeerIds.contains(ChatListNodeState.ItemId(peerId: peerId, threadId: threadId)) {

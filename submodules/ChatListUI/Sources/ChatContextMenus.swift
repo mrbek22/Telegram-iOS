@@ -241,6 +241,25 @@ func chatContextMenuItems(context: AccountContext, peerId: EnginePeer.Id, promoI
                             })))
                         }
 
+                        // AlfaGram: hide / unhide (once the hidden chats have their code).
+                        if AlfaHiddenChats.isEnabled && !isForum && !isCommunity {
+                            let alfaIsHidden = AlfaHiddenChats.isHidden(accountPeerId: context.account.peerId, peerId: peerId)
+                            items.append(.action(ContextMenuActionItem(text: alfaIsHidden ? AlfaCyrillic.ui("Yashirishdan chiqarish") : AlfaCyrillic.ui("Chatni yashirish"), icon: { theme in generateTintedImage(image: UIImage(systemName: alfaIsHidden ? "eye" : "eye.slash"), color: theme.contextMenu.primaryColor) }, action: { c, _ in
+                                c?.dismiss(completion: {
+                                    AlfaHiddenChats.setHidden(accountPeerId: context.account.peerId, peerId: peerId, hidden: !alfaIsHidden)
+                                    if !alfaIsHidden {
+                                        // a hidden chat is silent
+                                        let _ = context.engine.peers.updatePeerMuteSetting(peerId: peerId, threadId: nil, muteInterval: Int32.max).startStandalone()
+                                    }
+                                    chatListController?.alfaRefreshRows()
+                                    let text = alfaIsHidden ? AlfaCyrillic.ui("Chat yana ro'yxatda") : AlfaCyrillic.ui("Chat yashirildi. Ko'rish uchun «Chatlar» sarlavhasini bosib turing")
+                                    chatListController?.present(UndoOverlayController(presentationData: presentationData, content: .info(title: nil, text: text, timeout: 3.0, customUndoText: nil), elevatedLayout: false, animateInAsReplacement: true, action: { _ in
+                                        return false
+                                    }), in: .current)
+                                })
+                            })))
+                        }
+
                         // A folder's include/exclude lists are matched against a peer's identity-overriding
                         // associated peer (ChatListFilterPredicate.includes), so a secret chat's own id can
                         // never match one: adding or removing it would write an entry that changes nothing
