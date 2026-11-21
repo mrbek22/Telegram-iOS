@@ -343,7 +343,7 @@ private final class ItemNode: ASDisplayNode {
         let textNodes: [ImmediateTextNodeWithEntities] = [self.titleNode, self.titleActiveNode, self.shortTitleNode, self.shortTitleActiveNode]
         if name != nil {
             // The title text only reserves the icon's width; the icon is drawn on top.
-            let placeholder = "\u{2003}\u{2002}"
+            let placeholder = "\u{2003}\u{2003}"
             for node in textNodes {
                 if node.attributedText?.string != placeholder {
                     node.attributedText = NSAttributedString(string: placeholder, font: Font.medium(14.0), textColor: .clear)
@@ -362,10 +362,10 @@ private final class ItemNode: ASDisplayNode {
         guard let name else {
             return
         }
-        // Telegram's own folder icons (a robot for bots), drawn at 20 pt.
+        // Telegram's own folder icons (a robot for bots), drawn at 28 pt, as in the chat list tabs; the placeholder reserves the same 28 pt (two em spaces at 14 pt).
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
-            let side: CGFloat = 24.0
+            let side: CGFloat = 28.0
             image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
                 source.draw(in: CGRect(x: 0.0, y: 0.0, width: side, height: side))
             }.withRenderingMode(.alwaysTemplate)
