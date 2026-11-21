@@ -4,12 +4,17 @@ import TelegramCore
 import TelegramPresentationData
 import AnimatedStickerNode
 import TelegramAnimatedStickerNode
+import SwiftSignalKit
+import AccountContext
 
 /// AlfaGram: «Log in with a bot token» — a full screen: a robot, a title, a short note, a rounded token field and a
 /// wide button. `submit` gets the token and calls back with an error text, or nil once the login went through.
 final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
     private let presentationData: PresentationData
+    private let sharedContext: SharedAccountContext
     private let submit: (String, @escaping (String?) -> Void) -> Void
+    private var emojiDisposable: Disposable?
+    private var emojiFetchDisposable: Disposable?
 
     private let scrollView = UIScrollView()
     private let backButton = UIButton(type: .system)
@@ -23,11 +28,17 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
     private let footerLabel = UILabel()
     private var inProgress = false
 
-    init(presentationData: PresentationData, submit: @escaping (String, @escaping (String?) -> Void) -> Void) {
+    init(sharedContext: SharedAccountContext, presentationData: PresentationData, submit: @escaping (String, @escaping (String?) -> Void) -> Void) {
+        self.sharedContext = sharedContext
         self.presentationData = presentationData
         self.submit = submit
         super.init(nibName: nil, bundle: nil)
         self.modalPresentationStyle = .fullScreen
+    }
+
+    deinit {
+        self.emojiDisposable?.dispose()
+        self.emojiFetchDisposable?.dispose()
     }
 
     required init?(coder: NSCoder) {
@@ -56,6 +67,22 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.robotNode.setup(source: AnimatedStickerNodeLocalFileSource(name: "AlfaRobot"), width: 240, height: 240, playbackMode: .loop, mode: .direct(cachePathPrefix: nil))
         self.robotNode.visibility = true
         self.scrollView.addSubview(self.robotNode.view)
+        // Telegram's own animated 🤖 when an account is already logged in (adding an account): the bundled one stays
+        // only for the very first login, when nothing can load Telegram's emoji yet.
+        self.emojiDisposable = (self.sharedContext.activeAccountContexts
+        |> take(1)
+        |> deliverOnMainQueue).start(next: { [weak self] contexts in
+            guard let self, let context = contexts.primary ?? contexts.accounts.first?.1 else {
+                return
+            }
+            let items = context.animatedEmojiStickersValue["🤖"] ?? context.animatedEmojiStickersValue["🤖\u{FE0F}"]
+            guard let file = items?.first?.file._parse() else {
+                return
+            }
+            self.emojiFetchDisposable = freeMediaFileInteractiveFetched(account: context.account, userLocation: .other, fileReference: .standalone(media: file)).start()
+            self.robotNode.setup(source: AnimatedStickerResourceSource(account: context.account, resource: file.resource, isVideo: file.isVideoSticker), width: 240, height: 240, playbackMode: .loop, mode: .direct(cachePathPrefix: nil))
+            self.robotNode.visibility = true
+        })
 
         self.titleLabel.text = AlfaCyrillic.ui("Bot token bilan kirish")
         self.titleLabel.font = UIFont.systemFont(ofSize: 28.0, weight: .bold)
@@ -94,7 +121,8 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.loginButton.setTitle(AlfaCyrillic.ui("Tizimga kirish"), for: .normal)
         self.loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 17.0, weight: .semibold)
         self.loginButton.setTitleColor(.white, for: .normal)
-        self.loginButton.backgroundColor = theme.list.itemCheckColors.fillColor
+        // the accent color (the check fill is white in dark themes — the white spinner vanished on it)
+        self.loginButton.backgroundColor = theme.list.itemAccentColor
         self.loginButton.layer.cornerRadius = 27.0
         self.loginButton.addTarget(self, action: #selector(self.loginPressed), for: .touchUpInside)
         self.scrollView.addSubview(self.loginButton)

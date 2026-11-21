@@ -365,7 +365,7 @@ private final class ItemNode: ASDisplayNode {
         // Telegram's own folder icons (a robot for bots), drawn at 20 pt.
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
-            let side: CGFloat = 20.0
+            let side: CGFloat = 24.0
             image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
                 source.draw(in: CGRect(x: 0.0, y: 0.0, width: side, height: side))
             }.withRenderingMode(.alwaysTemplate)

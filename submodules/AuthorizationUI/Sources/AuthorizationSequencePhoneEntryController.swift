@@ -132,7 +132,7 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
             return
         }
         self.view.endEditing(true)
-        let controller = AlfaBotTokenLoginController(presentationData: self.presentationData, submit: { [weak self] token, completion in
+        let controller = AlfaBotTokenLoginController(sharedContext: self.sharedContext, presentationData: self.presentationData, submit: { [weak self] token, completion in
             guard let self else {
                 completion(nil)
                 return
