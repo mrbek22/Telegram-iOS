@@ -295,6 +295,13 @@ extension PeerInfoScreenNode {
                 })
                 self.controller?.present(linkController, animated: true, completion: nil)
             })
+        case .alfaHiddenAccounts:
+            AlfaAuth.authenticate(reason: AlfaCyrillic.ui("Maxfiy akkauntlarni ochish"), completion: { [weak self] success in
+                guard success, let self else {
+                    return
+                }
+                self.controller?.push(alfaHiddenAccountsController(context: self.context))
+            })
         case .alfaHelp:
             let presentationData = self.context.sharedContext.currentPresentationData.with { $0 }
             self.context.sharedContext.openExternalUrl(context: self.context, urlContext: .generic, url: "https://t.me/alfagram_chat", forceExternal: false, presentationData: presentationData, navigationController: self.controller?.navigationController as? NavigationController, dismissInput: {})

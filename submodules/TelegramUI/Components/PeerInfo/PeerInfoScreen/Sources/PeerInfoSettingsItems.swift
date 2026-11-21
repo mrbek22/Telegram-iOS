@@ -147,7 +147,11 @@ func settingsItems(data: PeerInfoScreenData?, context: AccountContext, presentat
                 }))
             }
             
-            items[.accounts]!.append(PeerInfoScreenActionItem(id: 100, text: presentationData.strings.Settings_AddAccount, icon: PresentationResourcesItemList.plusIconImage(presentationData.theme), action: {
+            // AlfaGram: holding «Add Account» opens the hidden accounts (after Face ID / the passcode) — the way back
+            // to a hidden account when no other account row is left to hold.
+            items[.accounts]!.append(PeerInfoScreenActionItem(id: 100, text: presentationData.strings.Settings_AddAccount, icon: PresentationResourcesItemList.plusIconImage(presentationData.theme), alfaLongTapAction: {
+                interaction.openSettings(.alfaHiddenAccounts)
+            }, action: {
                 interaction.openSettings(.addAccount)
             }))
         }

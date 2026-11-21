@@ -19,6 +19,17 @@ func leftNavigationButtonForChatInterfaceState(_ presentationInterfaceState: Cha
         if case .replyThread = presentationInterfaceState.chatLocation {
             return nil
         }
+        // AlfaGram: in a chat the selection mode gets «All» (every loaded message); clearing the chat stays in the
+        // chat's menu. Scheduled messages keep «Clear All».
+        if case .scheduledMessages = presentationInterfaceState.subject {
+        } else {
+            if let currentButton = currentButton, currentButton.action == .alfaSelectAll {
+                return currentButton
+            }
+            let alfaButtonItem = UIBarButtonItem(title: AlfaCyrillic.ui("Hammasi"), style: .plain, target: target, action: selector)
+            alfaButtonItem.accessibilityLabel = AlfaCyrillic.ui("Hammasini belgilash")
+            return ChatNavigationButton(action: .alfaSelectAll, buttonItem: alfaButtonItem)
+        }
         if let currentButton = currentButton, currentButton.action == .clearHistory {
             return currentButton
         } else if let peer = presentationInterfaceState.renderedPeer?.peer {

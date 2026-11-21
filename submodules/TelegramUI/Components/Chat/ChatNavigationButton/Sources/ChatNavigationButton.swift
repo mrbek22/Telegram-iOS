@@ -16,6 +16,8 @@ public enum ChatNavigationButtonAction: Equatable {
     case spacer
     case edit
     case toggleSideList
+    /// AlfaGram: «All» in the message selection mode.
+    case alfaSelectAll
 }
 
 public struct ChatNavigationButton: Equatable {

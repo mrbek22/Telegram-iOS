@@ -26,8 +26,11 @@ final class PeerInfoScreenActionItem: PeerInfoScreenItem {
     let iconSignal: Signal<UIImage?, NoError>?
     let alignment: PeerInfoScreenActionAligmnent
     let action: (() -> Void)?
-    
-    init(id: AnyHashable, text: String, color: PeerInfoScreenActionColor = .accent, icon: UIImage? = nil, iconSignal: Signal<UIImage?, NoError>? = nil, alignment: PeerInfoScreenActionAligmnent = .natural, action: (() -> Void)?) {
+    /// AlfaGram: holding the row (e.g. «Add Account» → the hidden accounts).
+    let alfaLongTapAction: (() -> Void)?
+
+    init(id: AnyHashable, text: String, color: PeerInfoScreenActionColor = .accent, icon: UIImage? = nil, iconSignal: Signal<UIImage?, NoError>? = nil, alignment: PeerInfoScreenActionAligmnent = .natural, alfaLongTapAction: (() -> Void)? = nil, action: (() -> Void)?) {
+        self.alfaLongTapAction = alfaLongTapAction
         self.id = id
         self.text = text
         self.color = color
@@ -51,6 +54,13 @@ private final class PeerInfoScreenActionItemNode: PeerInfoScreenItemNode {
     private let activateArea: AccessibilityAreaNode
     
     private var item: PeerInfoScreenActionItem?
+    private var alfaLongTapRecognizer: UILongPressGestureRecognizer?
+
+    @objc private func alfaLongTapped(_ recognizer: UILongPressGestureRecognizer) {
+        if recognizer.state == .began {
+            self.item?.alfaLongTapAction?()
+        }
+    }
     
     private let iconDisposable = MetaDisposable()
     
@@ -98,8 +108,14 @@ private final class PeerInfoScreenActionItemNode: PeerInfoScreenItemNode {
         }
         
         self.item = item
-                
+
         self.selectionNode.pressed = item.action
+        if item.alfaLongTapAction != nil && self.alfaLongTapRecognizer == nil {
+            let recognizer = UILongPressGestureRecognizer(target: self, action: #selector(self.alfaLongTapped(_:)))
+            recognizer.minimumPressDuration = 0.5
+            self.alfaLongTapRecognizer = recognizer
+            self.view.addGestureRecognizer(recognizer)
+        }
         
         let sideInset: CGFloat = 16.0 + safeInsets.left
         let sideInsetRight: CGFloat = 16.0 + safeInsets.right

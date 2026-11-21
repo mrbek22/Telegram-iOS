@@ -123,12 +123,33 @@ import ChatEmptyNode
 import ChatMediaInputStickerGridItem
 
 extension ChatControllerImpl {
+    /// AlfaGram: selects every loaded message of the chat; when all of them are selected already, clears the selection.
+    func alfaToggleSelectAllMessages() {
+        var ids: [EngineMessage.Id] = []
+        self.chatDisplayNode.historyNode.forEachMessageInCurrentHistoryView { message in
+            ids.append(message.id)
+            return true
+        }
+        if ids.isEmpty {
+            return
+        }
+        let selected = self.presentationInterfaceState.interfaceState.selectionState?.selectedIds ?? Set()
+        let allSelected = ids.allSatisfy { selected.contains($0) }
+        self.updateChatPresentationInterfaceState(animated: true, interactive: true, { state in
+            return state.updatedInterfaceState { interfaceState in
+                return interfaceState.withToggledSelectedMessages(ids, value: !allSelected)
+            }
+        })
+    }
+
     func navigationButtonAction(_ action: ChatNavigationButtonAction) {
         switch action {
         case .spacer, .toggleInfoPanel:
             break
         case .toggleSideList:
             self.toggleSideList()
+        case .alfaSelectAll:
+            self.alfaToggleSelectAllMessages()
         case .cancelMessageSelection:
             self.updateChatPresentationInterfaceState(animated: true, interactive: true, { $0.updatedInterfaceState { $0.withoutSelectionState() } })
         case .clearHistory:

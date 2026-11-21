@@ -213,6 +213,7 @@ public enum AlfaStrings {
         "Bot token bilan kirish": ("Log in with a bot token", "Войти по токену бота"),
         "Orqaga": ("Back", "Назад"),
         "Dumaloq video": ("Round video", "Видеосообщение"),
+
         "4 raqamli PIN kodni kiriting": ("Enter the 4-digit PIN", "Введите 4-значный PIN"),
         "Parolni kiriting": ("Enter the password", "Введите пароль"),
         "Parol": ("Password", "Пароль"),
