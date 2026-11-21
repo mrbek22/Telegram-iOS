@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import Display
+import AppBundle
 import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
@@ -41,6 +42,10 @@ func alfaSettingsIcon(_ symbol: String, _ color: UInt32) -> UIImage? {
         if let glyph = UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 14.0, weight: .semibold))?.withTintColor(UIColor.white, renderingMode: .alwaysOriginal) {
             let glyphSize = glyph.size
             glyph.draw(in: CGRect(origin: CGPoint(x: (size.width - glyphSize.width) / 2.0, y: (size.height - glyphSize.height) / 2.0), size: glyphSize))
+        } else if let asset = UIImage(bundleImageName: symbol)?.withTintColor(UIColor.white, renderingMode: .alwaysOriginal) {
+            // Not an SF Symbol: one of Telegram's own icons (the robot of the Bots folder).
+            let side: CGFloat = 19.0
+            asset.draw(in: CGRect(x: (size.width - side) / 2.0, y: (size.height - side) / 2.0, width: side, height: side))
         }
     }
 }

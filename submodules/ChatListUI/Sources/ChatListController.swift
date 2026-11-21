@@ -7498,10 +7498,12 @@ private final class ChatListLocationContext {
         if stateAndFilterId.state.editing {
             if case .chatList(.root) = self.location {
                 // AlfaGram: «All» selects every loaded chat of the current tab (again: clears the selection).
+                // The bar keeps the first action it got for this id, so it must not depend on this context living on.
+                let alfaParentController = self.parentController
                 self.rightButton = NavigationBarComponent.Button(id: "alfaSelectAll",
                     content: .text(title: AlfaCyrillic.ui("Hammasi"), isBold: false),
-                    action: { [weak self] _ in
-                        self?.parentController?.alfaToggleSelectAllChats()
+                    action: { [weak alfaParentController] _ in
+                        alfaParentController?.alfaToggleSelectAllChats()
                     }
                 )
                 self.storyButton = nil

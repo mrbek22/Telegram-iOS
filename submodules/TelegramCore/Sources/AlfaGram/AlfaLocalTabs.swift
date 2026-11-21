@@ -31,7 +31,7 @@ public enum AlfaLocalTabs {
         case channelsId:
             return "megaphone.fill"
         case botsId:
-            return "cpu"
+            return "face.smiling"
         default:
             return nil
         }

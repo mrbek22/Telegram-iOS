@@ -71,7 +71,7 @@ private func alfaAboutFeatures() -> [AlfaAboutFeature] {
         enable: AlfaText(uz: "Sozlamalar → «Akkaunt qo'shish».", en: "Settings → «Add Account».", ru: "Настройки → «Добавить аккаунт»."),
         how: AlfaText(uz: "Bitta ilovada 10 tagacha Telegram akkaunti. Ular orasida Sozlamalar tugmasini bosib turib almashasiz.", en: "Up to 10 Telegram accounts in one app. Switch by pressing and holding the Settings tab.", ru: "До 10 аккаунтов Telegram в одном приложении. Переключайтесь, удерживая вкладку «Настройки»."),
         disable: nil),
-    AlfaAboutFeature(symbol: "cpu", color: 0x5856d6,
+    AlfaAboutFeature(symbol: "Chat List/Filters/Bot", color: 0x5856d6,
         title: AlfaText(uz: "Bot token bilan kirish", en: "Log in with a bot token", ru: "Вход по токену бота"),
         enable: AlfaText(uz: "Kirish ekranida (telefon raqami so'raladigan joy) o'ng tepadagi robot tugmasini bosing va @BotFather bergan tokenni kiriting.", en: "On the login screen (where the phone number is asked), tap the robot at the top right and enter the token from @BotFather.", ru: "На экране входа (где спрашивают номер) нажмите робота справа вверху и введите токен от @BotFather."),
         how: AlfaText(uz: "Ilova bot nomidan ochiladi. Telegram botlarga eski chatlar va tarixni bermaydi — faqat kirgandan keyingi yangi xabarlar keladi.", en: "The app opens as the bot. Telegram gives bots no old chats or history — only new messages after logging in.", ru: "Приложение открывается от имени бота. Telegram не даёт ботам старые чаты и историю — только новые сообщения после входа."),

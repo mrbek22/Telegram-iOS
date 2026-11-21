@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
+import AppBundle
 import TelegramCore
 import TelegramPresentationData
 import TextNodeWithEntities
@@ -361,7 +362,14 @@ private final class ItemNode: ASDisplayNode {
         guard let name else {
             return
         }
-        let image = UIImage(systemName: name, withConfiguration: UIImage.SymbolConfiguration(pointSize: 16.0, weight: .semibold))?.withRenderingMode(.alwaysTemplate)
+        // Telegram's own folder icons (a robot for bots), drawn at 22 pt.
+        var image: UIImage?
+        if let source = UIImage(bundleImageName: name) {
+            let side: CGFloat = 22.0
+            image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
+                source.draw(in: CGRect(x: 0.0, y: 0.0, width: side, height: side))
+            }.withRenderingMode(.alwaysTemplate)
+        }
         for node in textNodes {
             let view = UIImageView(image: image)
             view.tintColor = color
@@ -872,7 +880,7 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
             itemNode.updateText(strings: presentationData.strings, title: filter.title(strings: presentationData.strings), shortTitle: i == 0 ? filter.shortTitle(strings: presentationData.strings) : filter.title(strings: presentationData.strings), unreadCount: unreadCount, unreadHasUnmuted: unreadHasUnmuted, isNoFilter: isNoFilter, selectionFraction: selectionFraction, isEditing: isEditing, isReordering: isReordering, canReorderAllChats: canReorderAllChats, isDisabled: isDisabled, presentationData: presentationData, transition: itemNodeTransition)
             var alfaIconName: String?
             if case let .filter(alfaFilterId, _, _) = filter {
-                alfaIconName = AlfaLocalTabs.symbolName(alfaFilterId)
+                alfaIconName = AlfaLocalTabs.iconName(alfaFilterId)
             }
             itemNode.alfaUpdateIcon(alfaIconName, color: presentationData.theme.chat.inputPanel.panelControlColor)
 }

@@ -202,6 +202,12 @@ public func chatListViewForLocation(chatListLocation: ChatListControllerLocation
     case let .chatList(groupId):
         let filterPredicate: ChatListFilterPredicate?
         if let filter = location.filter, case let .filter(_, _, _, data) = filter {
+            var data = data
+            if case .archive = groupId {
+                // AlfaGram: a tab inside the archive lists the archived chats — Postbox drops every archived chat
+                // from a filter that excludes the archive.
+                data.excludeArchived = false
+            }
             filterPredicate = chatListFilterPredicate(filter: data, accountPeerId: account.peerId)
         } else {
             filterPredicate = nil
