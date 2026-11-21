@@ -373,11 +373,25 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     }
     
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        guard let windowScene = self.view.window?.windowScene else {
-            preconditionFailure()
+        // AlfaGram: the bot token screen may cover this one when the passkey request comes — never crash for
+        // want of a window (it was `preconditionFailure()`, crash 2026-11-21, build 36585).
+        if let window = self.view.window {
+            return window
         }
-        return ASPresentationAnchor(windowScene: windowScene)
+        if let window = self.presentedViewController?.view.window {
+            return window
+        }
+        if let window = self.navigationController?.view.window {
+            return window
+        }
+        if let window = self.alfaKnownWindow {
+            return window
+        }
+        preconditionFailure()
     }
+
+    /// AlfaGram: the last window this screen was in (the passkey sheet's fallback anchor).
+    private weak var alfaKnownWindow: UIWindow?
     
     public func updateCountryCode() {
         self.controllerNode.updateCountryCode()
@@ -402,6 +416,7 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
     
     override public func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        self.alfaKnownWindow = self.view.window
         
         if !self.animatingIn {
             self.controllerNode.activateInput()

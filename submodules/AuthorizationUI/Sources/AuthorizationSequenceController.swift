@@ -912,7 +912,11 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
     
     @available(iOS 13.0, *)
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return self.view.window!
+        // AlfaGram: no force unwrap — a covered screen has no window.
+        if let window = self.view.window ?? self.presentedViewController?.view.window {
+            return window
+        }
+        preconditionFailure()
     }
     
     private func passwordEntryController(hint: String, suggestReset: Bool, syncContacts: Bool) -> AuthorizationSequencePasswordEntryController {

@@ -33,7 +33,8 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.presentationData = presentationData
         self.submit = submit
         super.init(nibName: nil, bundle: nil)
-        self.modalPresentationStyle = .fullScreen
+        // over, not instead of, the phone screen: it stays in the window (its passkey request needs one)
+        self.modalPresentationStyle = .overFullScreen
     }
 
     deinit {
