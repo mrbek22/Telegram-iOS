@@ -365,12 +365,13 @@ private final class ItemNode: ASDisplayNode {
             return
         }
         // Telegram's own folder icons (a robot for bots). Their 40 pt canvas holds a ~22 pt glyph in its middle, so
-        // drawing the whole canvas at 28 pt left a ~15 pt glyph: the canvas is drawn at 42 pt, centred and cropped to
-        // 26 pt, which makes the glyph ~23 pt, as large as the tab's text line allows. The placeholder reserves ~25 pt.
+        // drawing the whole canvas at 28 pt left a ~15 pt glyph, and at 42 pt (~23 pt glyph) it was a bit too big: the
+        // canvas is drawn at 37 pt, centred and cropped to 26 pt, which makes the glyph ~20 pt. The placeholder
+        // reserves ~25 pt.
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
             let side: CGFloat = 26.0
-            let drawnSide: CGFloat = 42.0
+            let drawnSide: CGFloat = 37.0
             image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
                 let origin = (side - drawnSide) / 2.0
                 source.draw(in: CGRect(x: origin, y: origin, width: drawnSide, height: drawnSide))
