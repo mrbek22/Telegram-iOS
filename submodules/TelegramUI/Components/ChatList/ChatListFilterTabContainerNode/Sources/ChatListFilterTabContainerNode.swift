@@ -342,8 +342,10 @@ private final class ItemNode: ASDisplayNode {
     func alfaUpdateIcon(_ name: String?, color: UIColor) {
         let textNodes: [ImmediateTextNodeWithEntities] = [self.titleNode, self.titleActiveNode, self.shortTitleNode, self.shortTitleActiveNode]
         if name != nil {
-            // The title text only reserves the icon's width; the icon is drawn on top.
-            let placeholder = "\u{2003}\u{2003}"
+            // The title text only reserves the icon's width (clear «MM», ~25 pt); the icon is drawn on top. Not
+            // spaces: the text node drops trailing whitespace from its width, so the tab came out 0 pt wide and the
+            // icons were crammed together.
+            let placeholder = "MM"
             for node in textNodes {
                 if node.attributedText?.string != placeholder {
                     node.attributedText = NSAttributedString(string: placeholder, font: Font.medium(14.0), textColor: .clear)
@@ -364,8 +366,7 @@ private final class ItemNode: ASDisplayNode {
         }
         // Telegram's own folder icons (a robot for bots). Their 40 pt canvas holds a ~22 pt glyph in its middle, so
         // drawing the whole canvas at 28 pt left a ~15 pt glyph: the canvas is drawn at 42 pt, centred and cropped to
-        // 26 pt, which makes the glyph ~23 pt, as large as the tab's text line allows. The placeholder reserves 28 pt
-        // (two em spaces at 14 pt).
+        // 26 pt, which makes the glyph ~23 pt, as large as the tab's text line allows. The placeholder reserves ~25 pt.
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
             let side: CGFloat = 26.0
