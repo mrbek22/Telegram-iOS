@@ -874,6 +874,16 @@ func resolveMissingPeerChatInfos(accountPeerId: PeerId, network: Network, state:
     
     if missingPeers.isEmpty {
         return .single((state, hadError))
+    } else if alfaIsBotAccount(accountPeerId) {
+        // AlfaGram: a bot account can't call messages.getPeerDialogs (BOT_METHOD_INVALID), and a new chat only got
+        // into the chat list from its result: the incoming messages were stored, but the list stayed empty. The
+        // chats are included locally instead.
+        var updatedState = state
+        for peerId in missingPeers.keys {
+            updatedState.updatePeerChatInclusion(peerId: peerId, groupId: .root, changedGroup: false)
+            updatedState.peerChatInfos[peerId] = PeerChatInfo(notificationSettings: TelegramPeerNotificationSettings.defaultSettings)
+        }
+        return .single((updatedState, hadError))
     } else {
         Logger.shared.log("State", "will fetch chat info for \(missingPeers.count) peers")
         let signal = network.request(Api.functions.messages.getPeerDialogs(peers: Array(missingPeers.values)))
