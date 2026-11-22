@@ -50,6 +50,7 @@ public func alfaAuthorizeWithBotToken(accountManager: AccountManager<TelegramAcc
             switch result {
             case let .authorization(authorizationData):
                 let user = TelegramUser(user: authorizationData.user)
+                alfaMarkBotAccount(user.id)
                 let state = AuthorizedAccountState(isTestingEnvironment: account.testingEnvironment, masterDatacenterId: account.masterDatacenterId, peerId: user.id, state: nil, invalidatedChannels: [])
                 initializedAppSettingsAfterLogin(transaction: transaction, appVersion: account.networkArguments.appVersion, syncContacts: false)
                 transaction.setState(state)
@@ -64,4 +65,35 @@ public func alfaAuthorizeWithBotToken(accountManager: AccountManager<TelegramAcc
         |> castError(AlfaBotLoginError.self)
         |> ignoreValues
     }
+}
+
+private let alfaBotAccountsKey = "alfa_bot_accounts"
+
+/// AlfaGram: remembers that the account `peerId` is a bot logged in with its token.
+public func alfaMarkBotAccount(_ peerId: PeerId) {
+    var ids = UserDefaults.standard.array(forKey: alfaBotAccountsKey) as? [Int64] ?? []
+    if !ids.contains(peerId.toInt64()) {
+        ids.append(peerId.toInt64())
+        UserDefaults.standard.set(ids, forKey: alfaBotAccountsKey)
+    }
+}
+
+/// AlfaGram: whether the account `peerId` is a bot. Bots cannot call `messages.getDialogs`, `getPinnedDialogs` or
+/// `messages.getHistory` (BOT_METHOD_INVALID): the chat list and history fills skip them for such an account, or
+/// they retry forever and the chat list never stops loading.
+public func alfaIsBotAccount(_ peerId: PeerId) -> Bool {
+    let ids = UserDefaults.standard.array(forKey: alfaBotAccountsKey) as? [Int64] ?? []
+    return ids.contains(peerId.toInt64())
+}
+
+/// AlfaGram: `alfaIsBotAccount`, also recognising a bot account logged in before it was remembered.
+func alfaIsBotAccount(transaction: Transaction, peerId: PeerId) -> Bool {
+    if alfaIsBotAccount(peerId) {
+        return true
+    }
+    if let user = transaction.getPeer(peerId) as? TelegramUser, user.botInfo != nil {
+        alfaMarkBotAccount(peerId)
+        return true
+    }
+    return false
 }

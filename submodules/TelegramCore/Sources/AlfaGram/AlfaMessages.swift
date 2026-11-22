@@ -98,7 +98,7 @@ private func alfaCanKeepDeletedMessage(_ id: MessageId) -> Bool {
 /// groups, channels) and marks them `AlfaDeletedMessageAttribute` instead of letting them be deleted. Returns the ids
 /// that must still be deleted the usual way: all of them with the setting off, else the ones not stored here or in
 /// another namespace (scheduled, quick replies, local). A message already marked is left as it is.
-func alfaKeepDeletedMessages(transaction: Transaction, ids: [MessageId]) -> [MessageId] {
+public func alfaKeepDeletedMessages(transaction: Transaction, ids: [MessageId]) -> [MessageId] {
     if ids.isEmpty || !AlfaSettings.saveDeletedMessages {
         return ids
     }

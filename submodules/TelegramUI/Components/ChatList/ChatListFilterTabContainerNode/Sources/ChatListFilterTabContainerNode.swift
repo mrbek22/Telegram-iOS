@@ -362,12 +362,17 @@ private final class ItemNode: ASDisplayNode {
         guard let name else {
             return
         }
-        // Telegram's own folder icons (a robot for bots), drawn at 28 pt, as in the chat list tabs; the placeholder reserves the same 28 pt (two em spaces at 14 pt).
+        // Telegram's own folder icons (a robot for bots). Their 40 pt canvas holds a ~22 pt glyph in its middle, so
+        // drawing the whole canvas at 28 pt left a ~15 pt glyph: the canvas is drawn at 42 pt, centred and cropped to
+        // 26 pt, which makes the glyph ~23 pt, as large as the tab's text line allows. The placeholder reserves 28 pt
+        // (two em spaces at 14 pt).
         var image: UIImage?
         if let source = UIImage(bundleImageName: name) {
-            let side: CGFloat = 28.0
+            let side: CGFloat = 26.0
+            let drawnSide: CGFloat = 42.0
             image = UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { _ in
-                source.draw(in: CGRect(x: 0.0, y: 0.0, width: side, height: side))
+                let origin = (side - drawnSide) / 2.0
+                source.draw(in: CGRect(x: origin, y: origin, width: drawnSide, height: drawnSide))
             }.withRenderingMode(.alwaysTemplate)
         }
         for node in textNodes {
@@ -854,14 +859,15 @@ public final class ChatListFilterTabContainerNode: ASDisplayNode {
             let unreadHasUnmuted: Bool
             var isNoFilter = false
             var isDisabled = false
+            // AlfaGram: this tab row is only the forward (peer selection) sheet's: no unread counters there.
             switch filter {
-            case let .all(count):
-                unreadCount = count
+            case .all:
+                unreadCount = 0
                 unreadHasUnmuted = true
                 isNoFilter = true
-            case let .filter(_, _, unread):
-                unreadCount = unread.value
-                unreadHasUnmuted = unread.hasUnmuted
+            case .filter:
+                unreadCount = 0
+                unreadHasUnmuted = false
                 
                 if let filtersLimit = filtersLimit {
                     isDisabled = !canReorderAllChats && folderIndex >= filtersLimit

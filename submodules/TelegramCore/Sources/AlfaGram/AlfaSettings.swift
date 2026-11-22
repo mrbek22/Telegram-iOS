@@ -70,8 +70,30 @@ public enum AlfaSettings {
     /// Posted on the main queue's notification center after any switch changes.
     public static let didChangeNotification = Notification.Name("AlfaSettingsDidChange")
 
+    /// The switches the notification service extension also reads: kept in the App Group's defaults as well.
+    private static func isShared(_ key: Key) -> Bool {
+        switch key {
+        case .saveDeletedMessages, .saveEditHistory:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static let isExtension: Bool = Bundle.main.bundlePath.hasSuffix(".appex")
+
     public static func value(_ key: Key) -> Bool {
+        if isExtension {
+            if let value = AlfaSharedDefaults.value.object(forKey: key.defaultsKey) as? NSNumber {
+                return value.boolValue
+            }
+            return key.defaultValue
+        }
         if let value = UserDefaults.standard.object(forKey: key.defaultsKey) as? NSNumber {
+            // A switch set before it was shared reaches the extension too.
+            if isShared(key) && AlfaSharedDefaults.value.object(forKey: key.defaultsKey) == nil {
+                AlfaSharedDefaults.value.set(value.boolValue, forKey: key.defaultsKey)
+            }
             return value.boolValue
         }
         return key.defaultValue
@@ -79,6 +101,9 @@ public enum AlfaSettings {
 
     public static func setValue(_ key: Key, _ value: Bool) {
         UserDefaults.standard.set(value, forKey: key.defaultsKey)
+        if isShared(key) {
+            AlfaSharedDefaults.value.set(value, forKey: key.defaultsKey)
+        }
         NotificationCenter.default.post(name: AlfaSettings.didChangeNotification, object: nil, userInfo: ["key": key.rawValue])
     }
 

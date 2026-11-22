@@ -18,8 +18,10 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
 
     private let scrollView = UIScrollView()
     private let backButton = UIButton(type: .system)
-    /// The animated robot (Noto Emoji 🤖, bundled as AlfaRobot.tgs).
+    /// Telegram's own animated 🤖, once an account has loaded Telegram's animated emoji.
     private let robotNode: AnimatedStickerNode = DefaultAnimatedStickerNodeImpl()
+    /// The system 🤖 until then (and on the very first login, when no account can load Telegram's emoji).
+    private let robotLabel = UILabel()
     private let titleLabel = UILabel()
     private let noteLabel = UILabel()
     private let tokenField = UITextField()
@@ -65,24 +67,48 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         self.backButton.addTarget(self, action: #selector(self.backPressed), for: .touchUpInside)
         self.view.addSubview(self.backButton)
 
-        self.robotNode.setup(source: AnimatedStickerNodeLocalFileSource(name: "AlfaRobot"), width: 240, height: 240, playbackMode: .loop, mode: .direct(cachePathPrefix: nil))
-        self.robotNode.visibility = true
+        self.robotLabel.text = "🤖"
+        self.robotLabel.font = UIFont.systemFont(ofSize: 92.0)
+        self.robotLabel.textAlignment = .center
+        self.scrollView.addSubview(self.robotLabel)
+        self.robotNode.view.isHidden = true
         self.scrollView.addSubview(self.robotNode.view)
-        // Telegram's own animated 🤖 when an account is already logged in (adding an account): the bundled one stays
-        // only for the very first login, when nothing can load Telegram's emoji yet.
+        // Telegram's own animated 🤖 from any logged-in account: its animated emoji load after the app starts, so
+        // this waits for the set to arrive instead of reading it once (it was still empty, and the bundled Noto
+        // robot stayed).
         self.emojiDisposable = (self.sharedContext.activeAccountContexts
+        |> map { contexts -> AccountContext? in
+            return contexts.primary ?? contexts.accounts.first?.1
+        }
+        |> filter { $0 != nil }
         |> take(1)
-        |> deliverOnMainQueue).start(next: { [weak self] contexts in
-            guard let self, let context = contexts.primary ?? contexts.accounts.first?.1 else {
+        |> mapToSignal { context -> Signal<(AccountContext, TelegramMediaFile)?, NoError> in
+            guard let context else {
+                return .complete()
+            }
+            return context.animatedEmojiStickers
+            |> map { stickers -> (AccountContext, TelegramMediaFile)? in
+                let items = stickers["🤖"] ?? stickers["🤖\u{FE0F}"]
+                guard let file = items?.first?.file._parse() else {
+                    return nil
+                }
+                return (context, file)
+            }
+            |> filter { $0 != nil }
+            |> take(1)
+        }
+        |> deliverOnMainQueue).start(next: { [weak self] value in
+            guard let self, let value else {
                 return
             }
-            let items = context.animatedEmojiStickersValue["🤖"] ?? context.animatedEmojiStickersValue["🤖\u{FE0F}"]
-            guard let file = items?.first?.file._parse() else {
-                return
-            }
+            let (context, file) = value
             self.emojiFetchDisposable = freeMediaFileInteractiveFetched(account: context.account, userLocation: .other, fileReference: .standalone(media: file)).start()
             self.robotNode.setup(source: AnimatedStickerResourceSource(account: context.account, resource: file.resource, isVideo: file.isVideoSticker), width: 240, height: 240, playbackMode: .loop, mode: .direct(cachePathPrefix: nil))
             self.robotNode.visibility = true
+            self.robotNode.started = { [weak self] in
+                self?.robotNode.view.isHidden = false
+                self?.robotLabel.isHidden = true
+            }
         })
 
         self.titleLabel.text = AlfaCyrillic.ui("Bot token bilan kirish")
@@ -165,6 +191,7 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         let robotSide: CGFloat = 110.0
         self.robotNode.frame = CGRect(x: floor((bounds.width - robotSide) / 2.0), y: y - 5.0, width: robotSide, height: robotSide)
         self.robotNode.updateLayout(size: CGSize(width: robotSide, height: robotSide))
+        self.robotLabel.frame = self.robotNode.frame
         y += 100.0 + 24.0
         let titleHeight = self.titleLabel.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude)).height
         self.titleLabel.frame = CGRect(x: left, y: y, width: width, height: titleHeight)

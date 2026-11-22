@@ -2538,13 +2538,20 @@ private final class NotificationServiceHandler {
                         case let .deleteMessage(ids):
                             Logger.shared.log("NotificationService \(episode)", "Will delete messages \(ids)")
                             let mediaBox = stateManager.postbox.mediaBox
+                            // AlfaGram: with saving deleted messages on, the stored ones stay, marked deleted (this
+                            // push deleted them straight from the database, past the app's own hook, so a message
+                            // deleted while the app was in the background vanished), and their notifications stay.
+                            let alfaKeepsDeleted = AlfaSettings.saveDeletedMessages
                             let _ = (stateManager.postbox.transaction { transaction -> Void in
-                                _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, deleteMedia: true)
+                                let remainingIds = alfaKeepDeletedMessages(transaction: transaction, ids: ids)
+                                if !remainingIds.isEmpty {
+                                    _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: remainingIds, deleteMedia: true)
+                                }
                             }
                             |> deliverOn(strongSelf.queue)).start(completed: {
                                 UNUserNotificationCenter.current().getDeliveredNotifications(completionHandler: { notifications in
                                     var removeIdentifiers: [String] = []
-                                    for notification in notifications {
+                                    for notification in notifications where !alfaKeepsDeleted {
                                         if let peerIdString = notification.request.content.userInfo["peerId"] as? String, let peerIdValue = Int64(peerIdString), let messageIdString = notification.request.content.userInfo["msg_id"] as? String, let messageIdValue = Int32(messageIdString) {
                                             for id in ids {
                                                 if PeerId(peerIdValue) == id.peerId && messageIdValue == id.id {

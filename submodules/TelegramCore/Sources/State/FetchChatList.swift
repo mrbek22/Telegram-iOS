@@ -250,7 +250,17 @@ func fetchChatList(accountPeerId: PeerId, postbox: Postbox, network: Network, lo
         }
     }
     |> take(1)
-    |> mapToSignal { _ -> Signal<FetchedChatList?, NoError> in
+    |> mapToSignal { _ -> Signal<Bool, NoError> in
+        // AlfaGram: a bot account cannot load the chat list (BOT_METHOD_INVALID, retried forever): nothing is
+        // fetched, the hole closes empty and the list shows the chats whose messages arrive after the login.
+        return postbox.transaction { transaction -> Bool in
+            return alfaIsBotAccount(transaction: transaction, peerId: accountPeerId)
+        }
+    }
+    |> mapToSignal { isBotAccount -> Signal<FetchedChatList?, NoError> in
+        if isBotAccount {
+            return .single(nil)
+        }
         let offset: Signal<(Int32, Int32, Api.InputPeer), NoError>
         if upperBound.id.peerId.namespace == Namespaces.Peer.Empty {
             offset = single((0, 0, Api.InputPeer.inputPeerEmpty), NoError.self)

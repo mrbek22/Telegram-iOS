@@ -458,6 +458,18 @@ func fetchMessageHistoryHole(accountPeerId: PeerId, source: FetchMessageHistoryH
                 return .single(FetchMessageHistoryHoleResult(removedIndices: IndexSet(), strictRemovedIndices: IndexSet(), actualPeerId: nil, actualThreadId: nil, ids: []))
             }
             
+            // AlfaGram: a bot account cannot load history (BOT_METHOD_INVALID): the hole closes empty, the chat
+            // shows the messages that arrived after the login.
+            if alfaIsBotAccount(accountPeerId) {
+                return postbox.transaction { transaction -> FetchMessageHistoryHoleResult? in
+                    let fullRange: ClosedRange<MessageId.Id> = 1 ... (Int32.max - 1)
+                    if case let .direct(peerId, threadId) = peerInput {
+                        transaction.removeHole(peerId: peerId, threadId: threadId, namespace: namespace, space: space, range: fullRange)
+                    }
+                    return FetchMessageHistoryHoleResult(removedIndices: IndexSet(integersIn: Int(fullRange.lowerBound) ... Int(fullRange.upperBound)), strictRemovedIndices: IndexSet(), actualPeerId: nil, actualThreadId: nil, ids: [])
+                }
+            }
+            
             print("fetchMessageHistoryHole for \(peerInput) direction \(direction) space \(space)")
             Logger.shared.log("fetchMessageHistoryHole", "fetch for \(peerInput) direction \(direction) space \(space)")
             let request: Signal<Api.messages.Messages, MTRpcError>
