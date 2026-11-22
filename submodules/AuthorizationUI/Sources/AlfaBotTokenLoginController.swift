@@ -147,14 +147,21 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
 
         self.loginButton.setTitle(AlfaCyrillic.ui("Tizimga kirish"), for: .normal)
         self.loginButton.titleLabel?.font = UIFont.systemFont(ofSize: 17.0, weight: .semibold)
-        self.loginButton.setTitleColor(.white, for: .normal)
-        // the accent color (the check fill is white in dark themes — the white spinner vanished on it)
-        self.loginButton.backgroundColor = theme.list.itemAccentColor
+        // the accent color, with black or white text by its brightness: in a dark theme with a white accent the white
+        // title and spinner vanished on a white button
+        let accentColor = theme.list.itemAccentColor
+        var red: CGFloat = 0.0
+        var green: CGFloat = 0.0
+        var blue: CGFloat = 0.0
+        accentColor.getRed(&red, green: &green, blue: &blue, alpha: nil)
+        let buttonTextColor: UIColor = (0.299 * red + 0.587 * green + 0.114 * blue) > 0.7 ? .black : .white
+        self.loginButton.setTitleColor(buttonTextColor, for: .normal)
+        self.loginButton.backgroundColor = accentColor
         self.loginButton.layer.cornerRadius = 27.0
         self.loginButton.addTarget(self, action: #selector(self.loginPressed), for: .touchUpInside)
         self.scrollView.addSubview(self.loginButton)
 
-        self.activityIndicator.color = .white
+        self.activityIndicator.color = buttonTextColor
         self.activityIndicator.hidesWhenStopped = true
         self.loginButton.addSubview(self.activityIndicator)
 
