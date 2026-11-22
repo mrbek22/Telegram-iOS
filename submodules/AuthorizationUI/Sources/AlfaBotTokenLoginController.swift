@@ -76,23 +76,35 @@ final class AlfaBotTokenLoginController: UIViewController, UITextFieldDelegate {
         // Telegram's own animated 🤖 from any logged-in account: its animated emoji load after the app starts, so
         // this waits for the set to arrive instead of reading it once (it was still empty, and the bundled Noto
         // robot stayed).
+        // Every logged-in account is asked, not only the primary one: the primary may be a bot account, or its set
+        // may never load, and then the robot never came.
         self.emojiDisposable = (self.sharedContext.activeAccountContexts
-        |> map { contexts -> AccountContext? in
-            return contexts.primary ?? contexts.accounts.first?.1
-        }
-        |> filter { $0 != nil }
-        |> take(1)
-        |> mapToSignal { context -> Signal<(AccountContext, TelegramMediaFile)?, NoError> in
-            guard let context else {
-                return .complete()
+        |> map { contexts -> [AccountContext] in
+            var result: [AccountContext] = []
+            if let primary = contexts.primary {
+                result.append(primary)
             }
-            return context.animatedEmojiStickers
-            |> map { stickers -> (AccountContext, TelegramMediaFile)? in
-                let items = stickers["🤖"] ?? stickers["🤖\u{FE0F}"]
-                guard let file = items?.first?.file._parse() else {
-                    return nil
-                }
-                return (context, file)
+            for (_, context, _) in contexts.accounts where !result.contains(where: { $0.account.id == context.account.id }) {
+                result.append(context)
+            }
+            return result
+        }
+        |> filter { !$0.isEmpty }
+        |> take(1)
+        |> mapToSignal { contexts -> Signal<(AccountContext, TelegramMediaFile)?, NoError> in
+            let signals = contexts.map { context -> Signal<(AccountContext, TelegramMediaFile)?, NoError> in
+                return Signal<(AccountContext, TelegramMediaFile)?, NoError>.single(nil) |> then(context.animatedEmojiStickers
+                |> map { stickers -> (AccountContext, TelegramMediaFile)? in
+                    let items = stickers["🤖"] ?? stickers["🤖\u{FE0F}"]
+                    guard let file = items?.first?.file._parse() else {
+                        return nil
+                    }
+                    return (context, file)
+                })
+            }
+            return combineLatest(signals)
+            |> map { values -> (AccountContext, TelegramMediaFile)? in
+                return values.compactMap { $0 }.first
             }
             |> filter { $0 != nil }
             |> take(1)
